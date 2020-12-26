@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>RocketGroundStation</title>
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+	</head>
+
+	<body class="container" style="background-color: #292824; color: #fff">
+		<h1>This is a test</h1>
+		<canvas style="padding-left: 10px" id="testc"></canvas>
+	</body>
+
+	<script>
+		let canvas = document.getElementById("testc");
+		let ctx = canvas.getContext('2d');
+		let widthPx = 400; //px
+		let heightPx = 225; //px
+		let XAxisLeftOffset = 65; //px
+		let XAxisRightOffset = 25; //px
+		let YAxisBottomOffset = 45; //px
+		let YAxisTopOffset = 40; //px
+		let maxTicks = 20; //px
+		let tickSize = 10; //px
+		let strokeWidth = 1; //px
+		let titleFontSize = 15; //px
+		let axesFontSize = 12; //px
+		let numsFontSize = 10; //px
+
+		let bgColor = "#292824";
+		let strokeColor = "#fff";
+
+		let xRange = [-1.5, 1.5]; //max, min
+		let yRange = [-1.5, 1.5]; //max, min
+
+		const init = () => {
+			canvas.width = widthPx;
+			canvas.height = heightPx;
+			ctx.fillStyle = bgColor;
+			ctx.textBaseline = 'top';
+			ctx.fillRect(0, 0, widthPx, heightPx);
+		}
+
+		const clear = () => {
+			ctx.fillStyle = bgColor;
+			ctx.fillRect(0, 0, widthPx, heightPx);
+		}
+
+		const clearGraphArea = () => {
+			ctx.fillStyle = bgColor;
+			ctx.fillRect(XAxisLeftOffset+strokeWidth, YAxisTopOffset+(2*strokeWidth), widthPx-XAxisRightOffset-XAxisLeftOffset-strokeWidth, heightPx-YAxisBottomOffset-YAxisTopOffset-(3*strokeWidth));
+		}
+
+		const drawAxes = (tickCountX, tickCountY) => {
+			ctx.strokeStyle = strokeColor;
+			ctx.fillStyle = strokeColor;
+			ctx.lineWidth = strokeWidth;
+
+			//draw x axis line
+			ctx.beginPath();
+			ctx.moveTo(XAxisLeftOffset, heightPx-YAxisBottomOffset);
+			ctx.lineTo(widthPx-XAxisRightOffset, heightPx-YAxisBottomOffset);
+			//draw y axis line
+			ctx.moveTo(XAxisLeftOffset, YAxisTopOffset);
+			ctx.lineTo(XAxisLeftOffset, heightPx-YAxisBottomOffset);
+			//draw tick marks on x
+			let tickDistanceX = (widthPx-XAxisLeftOffset-XAxisRightOffset)/(tickCountX-1);
+			for (let i=0; i<tickCountX; i++) {
+				ctx.moveTo(XAxisLeftOffset+(i*tickDistanceX), heightPx-YAxisBottomOffset);
+				ctx.lineTo(XAxisLeftOffset+(i*tickDistanceX), heightPx-YAxisBottomOffset+tickSize)
+			}
+
+			//draw tick marks on y
+			let tickDistanceY = (heightPx-YAxisBottomOffset-YAxisTopOffset)/(tickCountY-1);
+			for (let i=0; i<tickCountY; i++) {
+				ctx.moveTo(XAxisLeftOffset-tickSize, heightPx-YAxisBottomOffset-(i*tickDistanceY));
+				ctx.lineTo(XAxisLeftOffset, heightPx-YAxisBottomOffset-(i*tickDistanceY));
+			}
+			ctx.closePath();
+			ctx.stroke();
+		}
+
+		const drawOuterBox = (x, y, width, height, radius) => {
+			ctx.strokeStyle = strokeColor;
+			ctx.fillStyle = strokeColor;
+			ctx.lineWidth = strokeWidth;
+
+			if (typeof radius === 'number') {
+				radius = {tl: radius, tr: radius, br: radius, bl: radius};
+			} else {
+				var defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
+				for (var side in defaultRadius) {
+				  radius[side] = radius[side] || defaultRadius[side];
+				}
+			}
+
+			ctx.beginPath();
+			ctx.moveTo(x + radius.tl, y);
+			ctx.lineTo(x + width - radius.tr, y);
+			ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+			ctx.lineTo(x + width, y + height - radius.br);
+			ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+			ctx.lineTo(x + radius.bl, y + height);
+			ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+			ctx.lineTo(x, y + radius.tl);
+			ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+			ctx.closePath();
+			ctx.stroke();
+		}
+
+		const drawTitles = (title, xAxis, yAxis, tickCountX, tickCountY, bufferTime) => {
+			ctx.strokeStyle = strokeColor;
+			ctx.fillStyle = strokeColor;
+
+			ctx.font = titleFontSize+"px Helvetica"; //Draw main title
+			let width = ctx.measureText(title).width;
+			ctx.fillText(title, (widthPx/2)-(width/2), titleFontSize);
+
+			ctx.font = axesFontSize+"px Helvetica"; //Draw x axis title
+			width = ctx.measureText(xAxis).width;
+			ctx.fillText(xAxis, (widthPx/2)-(width/2), heightPx-axesFontSize-5);
+
+			//Draw Y axis title
+			ctx.save(); //save snapshot of context state
+			width = ctx.measureText(yAxis).width; //measure text
+			ctx.translate(axesFontSize-5, (heightPx/2)+(width/2)); //translate to new pos
+			ctx.rotate(-Math.PI/2); //rotate 90deg
+			ctx.fillText(yAxis, 0, 0); //stroke text
+			ctx.restore(); //return to "normal" state
+		}
+
+		const drawXAxisNumbers = (min, max) => {
+			ctx.fillStyle = bgColor;
+			ctx.fillRect(2*strokeWidth, heightPx-YAxisBottomOffset+tickSize, widthPx-(4*strokeWidth), numsFontSize+2)
+
+			ctx.strokeStyle = strokeColor;
+			ctx.fillStyle = strokeColor;
+			ctx.font = numsFontSize+"px Helvetica"; //draw x axis numbers
+			let tickDistanceX = (widthPx-XAxisLeftOffset-XAxisRightOffset)/(ticksX-1);
+			let unitsPerTick = (max-min)/(ticksX-1);
+			for (let i=0; i<ticksX; i++) {
+				let value = String((min+(unitsPerTick*i)).toFixed(1));
+				let width = ctx.measureText(value).width;
+				ctx.fillText(value, XAxisLeftOffset+(i*tickDistanceX)-(width/2), heightPx-YAxisBottomOffset+numsFontSize+2);
+			}
+		}
+
+		const drawYAxisNumbers = (min, max) => {
+			ctx.fillStyle = bgColor;
+			ctx.fillRect(axesFontSize+10, YAxisTopOffset-(numsFontSize/2), XAxisLeftOffset-tickSize-(axesFontSize+10), heightPx-YAxisBottomOffset-YAxisTopOffset+numsFontSize);
+
+			ctx.strokeStyle = strokeColor;
+			ctx.fillStyle = strokeColor;
+			ctx.font = numsFontSize+"px Helvetica";
+			let tickDistanceY = (heightPx-YAxisBottomOffset-YAxisTopOffset)/(ticksY-1);
+			console.log("tdy: "+tickDistanceY);
+			let unitsPerTick = (max-min)/(ticksX-1);
+			for (let i=0; i<ticksY; i++) {
+				let value = String((min+(unitsPerTick*i)).toFixed(1));
+				let width = ctx.measureText(value).width;
+
+				ctx.fillText(value, XAxisLeftOffset-tickSize-width-3, heightPx-YAxisBottomOffset-(i*tickDistanceY)-(numsFontSize/2));
+			}
+		}
+
+		const drawGraph = (buffersToDraw, colors) => {
+			if (buffersToDraw.length != colors.length) return;
+			for (let i=0; i<buffersToDraw.length; i++) {
+				if (buffersToDraw[i].length == 0) return;
+				if (typeof colors[i] == "undefined") {
+					colors[i] = strokeColor;
+				}
+			}
+
+			let bUnitMins = [];
+			let bUnitMaxs = [];
+			for (let b=0; b<buffersToDraw.length; b++) {
+				bUnitMins.push(0);
+				bUnitMaxs.push(0);
+				let buffer = buffersToDraw[b];
+				for (let i=0; i<buffer.length; i++) {
+					if (buffer[i][0] > bUnitMaxs[b]) {
+						bUnitMaxs[b] = buffer[i][0];
+					}
+					if (buffer[i][0] < bUnitMins[b]) {
+						bUnitMins[b] = buffer[i][0];
+					}
+				}
+			}
+
+			let scaleFactors = [];
+			let bUnitMin = bUnitMax = 0;
+			for (let i=0; i<bUnitMins.length; i++) {
+				if (bUnitMins[i] < bUnitMin) {
+					bUnitMin = bUnitMins[i];
+				}
+				if (bUnitMaxs[i] > bUnitMax) {
+					bUnitMax = bUnitMaxs[i];
+				}
+			}
+			let scaledBMin = Math.min(-1.5, bUnitMin*2.25); //One tick beyond bMin or 1.5 min
+			let scaledBMax = Math.max(1.5, bUnitMax*2.25); //One tick beyond bMax
+
+			for (let i=0; i<bUnitMins.length; i++) {
+				let internalScaledBMin = Math.min(-1.5, bUnitMins[i]*2.25); //One tick beyond bMin or 1.5 min
+				let internalScaledBMax = Math.max(1.5, bUnitMaxs[i]*2.25); //One tick beyond bMax
+
+				scaleFactors.push((scaledBMax-scaledBMin)/(internalScaledBMax-internalScaledBMin));
+			}
+			console.log(scaleFactors);
+			// return;
+
+
+			//Redraw scaled Y axis, active scaling
+			drawYAxisNumbers(scaledBMin, scaledBMax);
+
+
+			//Calculate constants
+			let graphWidth = widthPx-XAxisRightOffset-XAxisLeftOffset-(2*strokeWidth); //px
+			let graphHeight = heightPx-YAxisBottomOffset-YAxisTopOffset-(2*strokeWidth); //px
+
+			let pxPerMSec = graphWidth/bufferTime;
+
+			let midY = YAxisTopOffset+strokeWidth+(graphHeight/2);
+			let rightX = widthPx-XAxisRightOffset-strokeWidth;
+
+			let bTimeMin = bTimeMax = 0;
+			let setBTimes = false;
+
+			//Actually plot the data
+			for (let b=0; b<buffersToDraw.length; b++) {
+				let buffer = buffersToDraw[b];
+
+				let pxPerUnit = graphHeight/((scaledBMax-scaledBMin)*scaleFactors[b]);
+				// console.log("ppu "+pxPerUnit);
+				// console.log("bm-bM "+((scaledBMax-scaledBMin)*scaleFactors[b]));
+
+				//Setup colors
+				ctx.strokeStyle = colors[b];
+				ctx.fillStyle = strokeColor;
+				ctx.beginPath();
+				//Sort buffer by time
+				buffer.sort( function(a, b){
+				    if(a[1] > b[1]) return 1;
+				    if(a[1] < b[1]) return -1;
+				    return 0;
+				});
+				
+				if (!setBTimes) {
+					bTimeMin = buffer[0][1];
+					bTimeMax = buffer[buffer.length-1][1];
+					setBTimes = true;
+				}
+
+				console.log("Mid y point:"+midY+", bottom y:"+(heightPx-YAxisBottomOffset-strokeWidth)+", height: "+graphHeight);
+				console.log("cur max point: "+(midY-buffer[buffer.length-1][0]*pxPerUnit));
+				ctx.moveTo(rightX-(pxPerMSec*(buffer[0][1]-bTimeMin)), midY-(pxPerUnit*buffer[0][0]));
+				for (let i=1; i<buffer.length; i++) {
+					ctx.lineTo(rightX-(pxPerMSec*(buffer[i][1]-bTimeMin)), midY-(pxPerUnit*buffer[i][0]));
+				}
+				ctx.stroke();
+			}
+
+		}
+
+		const flushOldBuffers = buffersToFlush => {
+			//first look for newest in all the buffers
+			let newestTime = 0;
+			for (let b = 0; b<buffersToFlush.length; b++) {
+				let buffer = buffersToFlush[b];
+				if (buffer.length == 0) return;
+				for (let i=0; i<buffer.length; i++) {
+					if (buffer[i][1] > newestTime) {
+						newestTime = buffer[i][1];
+					}
+				}
+			}
+
+			//Filter elements out of buffer beyond time limit
+			for (let b=0; b<buffersToFlush.length; b++) {
+				let buffer = buffersToFlush[b];
+				let finalBuffer = [];
+				for (let i=0; i<buffer.length; i++) {
+					let elem = buffer[i];
+					if (newestTime-elem[1] <= bufferTime) {
+						finalBuffer.push(elem);
+					}
+				}
+
+				buffersToFlush[b] = finalBuffer;
+			}
+
+			return buffersToFlush;
+		}
+
+		const update = (buffers, colors) => {
+			clearGraphArea();
+			drawGraph(buffers, colors);
+			buffers = flushOldBuffers(buffers);
+		}
+
+		const construct = (ticksX, ticksY, bufferTime) => { //buffertime in ms
+			init();
+			clear();
+			drawOuterBox(strokeWidth, strokeWidth, widthPx-(2*strokeWidth), heightPx-(2*strokeWidth), 10);
+			drawAxes(ticksX, ticksY);
+			drawTitles("Test graph 1", "Time (sec)", "Y Axis (hot units)");
+			drawXAxisNumbers(-bufferTime/1000, 0);
+			drawYAxisNumbers(0, 10);
+		}
+
+
+		const ticksX = ticksY = 7;
+		const bufferTime = 5000; //in ms
+		construct(ticksX, ticksY, bufferTime);
+
+		let t = 0;
+		let v = 0;
+
+		let buffers = [[],[]];
+		let i = setInterval(() => {
+			update(buffers, ["#00ff00", "#ff0000"]);
+			if (t>=4000) {clearInterval(i)};
+			buffers[0].push([0, t]);
+			buffers[1].push([1, t]);
+			// v = 50*Math.sin(t);
+			// v+=(t<2000)?1:(t>4000)?-5:0;
+			t+=50;
+		}, 50);
+		// for (let i=0; i<10; i++) {
+		// 	update(500);
+		// }
+	</script>
+</html>
