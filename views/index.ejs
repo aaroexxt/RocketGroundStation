@@ -47,7 +47,7 @@
 
 		const clearGraphArea = () => {
 			ctx.fillStyle = bgColor;
-			ctx.fillRect(XAxisLeftOffset+strokeWidth, YAxisTopOffset+(2*strokeWidth), widthPx-XAxisRightOffset-XAxisLeftOffset-strokeWidth, heightPx-YAxisBottomOffset-YAxisTopOffset-(3*strokeWidth));
+			ctx.fillRect(XAxisLeftOffset+strokeWidth, YAxisTopOffset, widthPx-XAxisRightOffset-XAxisLeftOffset, heightPx-YAxisBottomOffset-YAxisTopOffset-(3*strokeWidth));
 		}
 
 		const drawAxes = (tickCountX, tickCountY) => {
@@ -152,7 +152,6 @@
 			ctx.fillStyle = strokeColor;
 			ctx.font = numsFontSize+"px Helvetica";
 			let tickDistanceY = (heightPx-YAxisBottomOffset-YAxisTopOffset)/(ticksY-1);
-			console.log("tdy: "+tickDistanceY);
 			let unitsPerTick = (max-min)/(ticksX-1);
 			for (let i=0; i<ticksY; i++) {
 				let value = String((min+(unitsPerTick*i)).toFixed(1));
@@ -171,43 +170,22 @@
 				}
 			}
 
-			let bUnitMins = [];
-			let bUnitMaxs = [];
+			let bUnitMin = 0;
+			let bUnitMax = 0;
 			for (let b=0; b<buffersToDraw.length; b++) {
-				bUnitMins.push(0);
-				bUnitMaxs.push(0);
 				let buffer = buffersToDraw[b];
 				for (let i=0; i<buffer.length; i++) {
-					if (buffer[i][0] > bUnitMaxs[b]) {
-						bUnitMaxs[b] = buffer[i][0];
+					if (buffer[i][0] > bUnitMax) {
+						bUnitMax = buffer[i][0];
 					}
-					if (buffer[i][0] < bUnitMins[b]) {
-						bUnitMins[b] = buffer[i][0];
+					if (buffer[i][0] < bUnitMin) {
+						bUnitMin = buffer[i][0];
 					}
 				}
 			}
 
-			let scaleFactors = [];
-			let bUnitMin = bUnitMax = 0;
-			for (let i=0; i<bUnitMins.length; i++) {
-				if (bUnitMins[i] < bUnitMin) {
-					bUnitMin = bUnitMins[i];
-				}
-				if (bUnitMaxs[i] > bUnitMax) {
-					bUnitMax = bUnitMaxs[i];
-				}
-			}
 			let scaledBMin = Math.min(-1.5, bUnitMin*2.25); //One tick beyond bMin or 1.5 min
 			let scaledBMax = Math.max(1.5, bUnitMax*2.25); //One tick beyond bMax
-
-			for (let i=0; i<bUnitMins.length; i++) {
-				let internalScaledBMin = Math.min(-1.5, bUnitMins[i]*2.25); //One tick beyond bMin or 1.5 min
-				let internalScaledBMax = Math.max(1.5, bUnitMaxs[i]*2.25); //One tick beyond bMax
-
-				scaleFactors.push((scaledBMax-scaledBMin)/(internalScaledBMax-internalScaledBMin));
-			}
-			console.log(scaleFactors);
-			// return;
 
 
 			//Redraw scaled Y axis, active scaling
@@ -219,9 +197,12 @@
 			let graphHeight = heightPx-YAxisBottomOffset-YAxisTopOffset-(2*strokeWidth); //px
 
 			let pxPerMSec = graphWidth/bufferTime;
+			let pxPerUnit = graphHeight/(scaledBMax-scaledBMin);
+
+			let zeroPxOffset = ((scaledBMax+scaledBMin)/2)*pxPerUnit;
 
 			let midY = YAxisTopOffset+strokeWidth+(graphHeight/2);
-			let rightX = widthPx-XAxisRightOffset-strokeWidth;
+			let rightX = widthPx-XAxisRightOffset;
 
 			let bTimeMin = bTimeMax = 0;
 			let setBTimes = false;
@@ -229,8 +210,6 @@
 			//Actually plot the data
 			for (let b=0; b<buffersToDraw.length; b++) {
 				let buffer = buffersToDraw[b];
-
-				let pxPerUnit = graphHeight/((scaledBMax-scaledBMin)*scaleFactors[b]);
 				// console.log("ppu "+pxPerUnit);
 				// console.log("bm-bM "+((scaledBMax-scaledBMin)*scaleFactors[b]));
 
@@ -251,11 +230,11 @@
 					setBTimes = true;
 				}
 
-				console.log("Mid y point:"+midY+", bottom y:"+(heightPx-YAxisBottomOffset-strokeWidth)+", height: "+graphHeight);
-				console.log("cur max point: "+(midY-buffer[buffer.length-1][0]*pxPerUnit));
-				ctx.moveTo(rightX-(pxPerMSec*(buffer[0][1]-bTimeMin)), midY-(pxPerUnit*buffer[0][0]));
-				for (let i=1; i<buffer.length; i++) {
-					ctx.lineTo(rightX-(pxPerMSec*(buffer[i][1]-bTimeMin)), midY-(pxPerUnit*buffer[i][0]));
+				// console.log("Mid y point:"+midY+", bottom y:"+(heightPx-YAxisBottomOffset-strokeWidth)+", height: "+graphHeight);
+				// console.log("cur max point: "+(midY-buffer[buffer.length-1][0]*pxPerUnit));
+				ctx.moveTo(rightX-(pxPerMSec*(buffer[0][1]-bTimeMin)), midY-(pxPerUnit*buffer[0][0])+zeroPxOffset);
+				for (let i=1; i<buffer.length-1; i++) {
+					ctx.lineTo(rightX-(pxPerMSec*(buffer[i][1]-bTimeMin)), midY-(pxPerUnit*buffer[i][0])+zeroPxOffset);
 				}
 				ctx.stroke();
 			}
@@ -319,10 +298,10 @@
 		let buffers = [[],[]];
 		let i = setInterval(() => {
 			update(buffers, ["#00ff00", "#ff0000"]);
-			if (t>=4000) {clearInterval(i)};
+			if (t>=40000) {clearInterval(i)};
 			buffers[0].push([0, t]);
-			buffers[1].push([1, t]);
-			// v = 50*Math.sin(t);
+			buffers[1].push([v, t]);
+			v = 150*Math.sin(t);
 			// v+=(t<2000)?1:(t>4000)?-5:0;
 			t+=50;
 		}, 50);
