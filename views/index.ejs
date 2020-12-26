@@ -301,12 +301,15 @@
 			if (t>=40000) {clearInterval(i)};
 			buffers[0].push([0, t]);
 			buffers[1].push([v, t]);
-			v = 150*Math.sin(t);
+			v = (1/(t/10000))*Math.sin(t);
 			// v+=(t<2000)?1:(t>4000)?-5:0;
 			t+=50;
 		}, 50);
-		// for (let i=0; i<10; i++) {
-		// 	update(500);
-		// }
+		
+		/*Todos:
+		- make plot go up instantly, but come down slowly just like in joey b video
+		- make it a class
+		- websockets
+		*/
 	</script>
 </html>
