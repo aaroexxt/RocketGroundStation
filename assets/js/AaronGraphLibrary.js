@@ -22,7 +22,7 @@ var DisplayGraph = function(canvasID, opts) {
 		YAxisTopOffset: 40, //px
 
 		/* BASIC PARAMS (width, height, etc) */
-		width: 400, //px
+		width: 350, //px
 		height: 225, //px
 		bufferTime: 5000, //ms
 		fpsUpdate: 60,
@@ -37,8 +37,8 @@ var DisplayGraph = function(canvasID, opts) {
 		titleFontSize: 15, //px
 		axesFontSize: 12, //px
 		numsFontSize: 10, //px
-		bgColor: "#292824", //html color
-		strokeColor: "#fff", //html color
+		bgColor: "#ddd", //html color
+		strokeColor: "#000", //html color
 	}
 
 	//Now, we loop through opts to see if we should override any of the default options
@@ -70,6 +70,27 @@ var DisplayGraph = function(canvasID, opts) {
 
 	//Construct the actual graph (draws outside box, etc)
 	this.construct();
+
+	this.prevPageWidth = getPageWidth();
+	this.prevPageHeight = getPageHeight();
+
+	//Setup an event listener to resize when the screen does
+	window.addEventListener('resize', () => {
+		console.log("resize");
+		let widthRatio = getPageWidth()/this.prevPageWidth;
+		let heightRatio = getPageHeight()/this.prevPageHeight;
+		
+		this.canvas.width = widthRatio;
+		this.canvas.height = heightRatio;
+
+		this.options.width *= widthRatio;
+		this.options.height *= heightRatio;
+
+		this.construct();
+
+		this.prevPageWidth = getPageWidth();
+		this.prevPageHeight = getPageHeight();
+	})
 
 	//Setup updating interval to redraw graph every 1/fps sec
 	this.graphInterval = setInterval(() => {this.update();}, 1000/this.fpsUpdate);
@@ -345,4 +366,25 @@ DisplayGraph.prototype.construct = function() {
 	this.drawTitles(this.titles.main, this.titles.x, this.titles.y);
 	this.drawXAxisNumbers(-this.options.bufferTime/1000, 0);
 	this.drawYAxisNumbers(-1.5, 1.5);
+}
+
+//Utility functions for resize
+function getPageWidth() {
+  return Math.max(
+    document.body.scrollWidth,
+    document.documentElement.scrollWidth,
+    document.body.offsetWidth,
+    document.documentElement.offsetWidth,
+    document.documentElement.clientWidth
+  );
+}
+
+function getPageHeight() {
+  return Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight,
+    document.body.offsetHeight,
+    document.documentElement.offsetHeight,
+    document.documentElement.clientHeight
+  );
 }
