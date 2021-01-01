@@ -25,6 +25,20 @@ Main.js - Contains main server file
  *    distribution.
  */
 
+
+ /*
+ BT References
+ https://gist.github.com/eelcocramer/4117108
+ https://github.com/leevincentwilson/arduino_bluetooth_node/blob/master/src/node/index.js
+ */
+
+ /* Navball reference
+ https://github.com/msakuta/WebGL-Orbiter/tree/master/src
+
+ https://bernii.github.io/gauge.js/
+ https://canvas-gauges.com/documentation/examples/
+ */
+
  /* Dependency initialization */
 
  //Basic Dependencies
@@ -94,6 +108,25 @@ io.on('connection', client => {
 		console.log("Client disconnected");
 		clearInterval(interv);
 	});
+
+	/*
+	Messages that can be sent that need to be connected to rocket
+	
+	data-raw-gyro -> gyro data
+	data-raw-accel => accel data
+	data-raw-alt => alt data
+	data-ori => orientation fused frame data
+	data-yz-pos => YZ position (yPos, zPos, time)
+	data-yz-vel => YZ velocity (yVel, zVel, time)
+
+	v-connect => vehicle has connected, start VOT timer
+	v-disconnect => vehicle has disconnected, stop VOT timer
+	m-start => mission started, start MET timer
+	v-stop => mission stopped, stop MET timer
+
+	v-state => various state things (battV, rollV, servoV, state, pyroState, temp, signal, tlmRate, fixType, pDOP, horizAcc, vertAcc, gpsSats)
+
+	*/
 });
 
 console.log("Starting server");

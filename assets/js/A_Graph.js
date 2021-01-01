@@ -7,24 +7,22 @@ pls do not look too long at some of this code it is v cursed
 
 /*Todos:
 - make plot go up instantly, but come down slowly just like in joey b video
-- make it a class
-- websockets
 */
 
-var DisplayGraph = function(canvasID, opts) {
+var A_Graph = function(canvasID, opts) {
 	this.canvas = document.getElementById(canvasID);
 	this.ctx = this.canvas.getContext('2d');
 	this.options = { //setup default opts object
 		/* GRAPH OFFSETS (where it starts drawing from the edges of the canvas) */
-		XAxisLeftOffset: 65, //px
-		XAxisRightOffset: 25, //px
-		YAxisBottomOffset: 45, //px
-		YAxisTopOffset: 40, //px
+		XAxisLeftOffset: 45, //px (65 big)
+		XAxisRightOffset: 10, //px (25 big)
+		YAxisBottomOffset: 33, //px (45 big)
+		YAxisTopOffset: 20, //px (40 big)
 
 		/* BASIC PARAMS (width, height, etc) */
 		width: 350, //px
 		height: 225, //px
-		bufferTime: 5000, //ms
+		bufferTime: 10000, //ms
 		fpsUpdate: 60,
 
 		/* TICKS (graph ticks) */
@@ -34,11 +32,13 @@ var DisplayGraph = function(canvasID, opts) {
 
 		/* DRAW OPTIONS (stroke width, default color, etc) */
 		strokeWidth: 1, //px
-		titleFontSize: 15, //px
-		axesFontSize: 12, //px
-		numsFontSize: 10, //px
-		bgColor: "#ddd", //html color
-		strokeColor: "#000", //html color
+		strokeWidthGraph: 0.5, //px
+		titleFontSize: 11, //px (15 big)
+		axesFontSize: 9, //px (12 big)
+		numsFontSize: 8, //px (10 big)
+		bgColor: "#002", //html color
+		strokeColor: "#ddd", //html color
+		drawZeroLine: false
 	}
 
 	//Now, we loop through opts to see if we should override any of the default options
@@ -67,6 +67,9 @@ var DisplayGraph = function(canvasID, opts) {
 		x: opts.titleX,
 		y: opts.titleY
 	}
+	//optimized drawing only when needed constants
+	this.oldSBMin = 0;
+	this.oldSBMax = 0;
 
 	//Construct the actual graph (draws outside box, etc)
 	this.construct();
@@ -75,52 +78,53 @@ var DisplayGraph = function(canvasID, opts) {
 	this.prevPageHeight = getPageHeight();
 
 	//Setup an event listener to resize when the screen does
-	window.addEventListener('resize', () => {
-		console.log("resize");
-		let widthRatio = getPageWidth()/this.prevPageWidth;
-		let heightRatio = getPageHeight()/this.prevPageHeight;
+	// window.addEventListener('resize', () => {
+	// 	console.log("resize");
+	// 	let widthRatio = getPageWidth()/this.prevPageWidth;
+	// 	let heightRatio = getPageHeight()/this.prevPageHeight;
 		
-		this.canvas.width = widthRatio;
-		this.canvas.height = heightRatio;
+	// 	this.canvas.width = widthRatio;
+	// 	this.canvas.height = heightRatio;
 
-		this.options.width *= widthRatio;
-		this.options.height *= heightRatio;
+	// 	this.options.width *= widthRatio;
+	// 	this.options.height *= heightRatio;
 
-		this.construct();
+	// 	this.construct();
 
-		this.prevPageWidth = getPageWidth();
-		this.prevPageHeight = getPageHeight();
-	})
+	// 	this.prevPageWidth = getPageWidth();
+	// 	this.prevPageHeight = getPageHeight();
+	// })
 
 	//Setup updating interval to redraw graph every 1/fps sec
-	this.graphInterval = setInterval(() => {this.update();}, 1000/this.fpsUpdate);
+	this.updateInterval = setInterval(() => {this.update();}, 1000/this.options.fpsUpdate);
 }
 
 /* FUNCTION PROTOTYPES */
 
 //Initialize the graph; setup width, height, and fill it with blank color
-DisplayGraph.prototype.init = function() {
+A_Graph.prototype.init = function() {
 	this.canvas.width = this.options.width;
 	this.canvas.height = this.options.height;
 	this.ctx.fillStyle = this.options.bgColor;
+	this.ctx.lineWidth = this.options.strokeWidth;
 	this.ctx.textBaseline = 'top';
 	this.ctx.fillRect(0, 0, this.options.width, this.options.height);
 }
 
 //Clear the graph completely (fill with background color)
-DisplayGraph.prototype.clear = function() {
+A_Graph.prototype.clear = function() {
 	this.ctx.fillStyle = this.options.bgColor;
 	this.ctx.fillRect(0, 0, this.options.width, this.options.height);
 }
 
 //Clear graph area only (only active graphing area) so that title etc does not have to be withdrawn every frame
-DisplayGraph.prototype.clearGraphArea = function() {
+A_Graph.prototype.clearGraphArea = function() {
 	this.ctx.fillStyle = this.options.bgColor;
 	this.ctx.fillRect(this.options.XAxisLeftOffset+this.options.strokeWidth, this.options.YAxisTopOffset, this.options.width-this.options.XAxisRightOffset-this.options.XAxisLeftOffset, this.options.height-this.options.YAxisBottomOffset-this.options.YAxisTopOffset-(3*this.options.strokeWidth));
 }
 
 //Draw various axes onto the graph
-DisplayGraph.prototype.drawAxes = function() {
+A_Graph.prototype.drawAxes = function() {
 	this.ctx.strokeStyle = this.options.strokeColor;
 	this.ctx.fillStyle = this.options.strokeColor;
 	this.ctx.lineWidth = this.options.strokeWidth;
@@ -150,7 +154,7 @@ DisplayGraph.prototype.drawAxes = function() {
 }
 
 //Draw the outer box with rounded corners (no default function for this reee)
-DisplayGraph.prototype.drawOuterBox = function(x, y, width, height, radius) {
+A_Graph.prototype.drawOuterBox = function(x, y, width, height, radius) {
 	this.ctx.strokeStyle = this.options.strokeColor;
 	this.ctx.fillStyle = this.options.strokeColor;
 	this.ctx.lineWidth = this.options.strokeWidth;
@@ -179,13 +183,14 @@ DisplayGraph.prototype.drawOuterBox = function(x, y, width, height, radius) {
 }
 
 //Draw graph titles onto canvas
-DisplayGraph.prototype.drawTitles = function(title, xAxis, yAxis) {
+A_Graph.prototype.drawTitles = function(title, xAxis, yAxis) {
 	this.ctx.strokeStyle = this.options.strokeColor;
 	this.ctx.fillStyle = this.options.strokeColor;
+	this.ctx.lineWidth = this.options.strokeWidth;
 
 	this.ctx.font = this.options.titleFontSize+"px Helvetica"; //Draw main title
 	let width = this.ctx.measureText(title).width;
-	this.ctx.fillText(title, (this.options.width/2)-(width/2), this.options.titleFontSize);
+	this.ctx.fillText(title, (this.options.width/2)-(width/2), this.options.titleFontSize-this.options.strokeWidth*4);
 
 	this.ctx.font = this.options.axesFontSize+"px Helvetica"; //Draw x axis title
 	width = this.ctx.measureText(xAxis).width;
@@ -201,12 +206,13 @@ DisplayGraph.prototype.drawTitles = function(title, xAxis, yAxis) {
 }
 
 //Draw numbers on the X axis to correspond with the graph's range (min and max)
-DisplayGraph.prototype.drawXAxisNumbers = function(min, max) {
+A_Graph.prototype.drawXAxisNumbers = function(min, max) {
 	this.ctx.fillStyle = this.options.bgColor;
 	this.ctx.fillRect(2*this.options.strokeWidth, this.options.height-this.options.YAxisBottomOffset+this.options.tickSize, this.options.width-(4*this.options.strokeWidth), this.options.numsFontSize+2)
 
 	this.ctx.strokeStyle = this.options.strokeColor;
 	this.ctx.fillStyle = this.options.strokeColor;
+	this.ctx.lineWidth = this.options.strokeWidth;
 	this.ctx.font = this.options.numsFontSize+"px Helvetica"; //draw x axis numbers
 	let tickDistanceX = (this.options.width-this.options.XAxisLeftOffset-this.options.XAxisRightOffset)/(this.options.ticksX-1);
 	let unitsPerTick = (max-min)/(this.options.ticksX-1);
@@ -218,9 +224,14 @@ DisplayGraph.prototype.drawXAxisNumbers = function(min, max) {
 }
 
 //Draw numbers on the Y axis to correspond with the graph's range (min and max), this will be useful for autoscaling
-DisplayGraph.prototype.drawYAxisNumbers = function(min, max) {
+A_Graph.prototype.drawYAxisNumbers = function(min, max) {
 	this.ctx.fillStyle = this.options.bgColor;
-	this.ctx.fillRect(this.options.axesFontSize+10, this.options.YAxisTopOffset-(this.options.numsFontSize/2), this.options.XAxisLeftOffset-this.options.tickSize-(this.options.axesFontSize+10), this.options.height-this.options.YAxisBottomOffset-this.options.YAxisTopOffset+this.options.numsFontSize);
+	this.ctx.lineWidth = this.options.strokeWidth;
+
+	let chars = Math.max(String(min.toFixed(1)).length, String(max.toFixed(1)).length); //count chars
+	let width = chars*this.options.numsFontSize/2;
+
+	this.ctx.fillRect(this.options.XAxisLeftOffset-this.options.tickSize-this.options.strokeWidth*2, this.options.YAxisTopOffset-(this.options.numsFontSize/2), -width-this.options.strokeWidth, this.options.height-this.options.YAxisBottomOffset-this.options.YAxisTopOffset+this.options.numsFontSize);
 
 	this.ctx.strokeStyle = this.options.strokeColor;
 	this.ctx.fillStyle = this.options.strokeColor;
@@ -235,8 +246,25 @@ DisplayGraph.prototype.drawYAxisNumbers = function(min, max) {
 	}
 }
 
+//Draws a straight line at 0 for reference
+A_Graph.prototype.drawZeroLine = function() {
+	this.ctx.strokeStyle = this.options.strokeColor;
+	this.ctx.fillStyle = this.options.strokeColor;
+	this.ctx.lineWidth = this.options.strokeWidth;
+	this.ctx.beginPath();
+
+	let graphHeight = this.options.height-this.options.YAxisBottomOffset-this.options.YAxisTopOffset-(2*this.options.strokeWidth); //px
+	let graphWidth = this.options.width-this.options.XAxisRightOffset-this.options.XAxisLeftOffset-(2*this.options.strokeWidth); //px
+	let midY = this.options.YAxisTopOffset+this.options.strokeWidth+(graphHeight/2); //Mid y position of graph
+
+	this.ctx.moveTo(this.options.XAxisLeftOffset, midY);
+	this.ctx.lineTo(this.options.XAxisLeftOffset+graphWidth, midY);
+
+	this.ctx.stroke();
+}
+
 //This is the big boi function, it draws the various buffers onto the graph with their respective colors
-DisplayGraph.prototype.drawGraph = function(buffersToDraw, colors) {
+A_Graph.prototype.drawGraph = function(buffersToDraw, colors) {
 	if (buffersToDraw.length != colors.length) return; //Make sure buffers and colors are the same size
 	for (let i=0; i<buffersToDraw.length; i++) {
 		if (buffersToDraw[i].length == 0) return; //Make sure buffers have data in them to draw
@@ -266,7 +294,12 @@ DisplayGraph.prototype.drawGraph = function(buffersToDraw, colors) {
 
 
 	//Redraw scaled Y axis, active scaling
-	this.drawYAxisNumbers(scaledBMin, scaledBMax);
+	if (this.oldSBMin != scaledBMin || this.oldSBMax != scaledBMax) { //redraw only if range is different (optimization)
+		this.drawYAxisNumbers(scaledBMin, scaledBMax);
+	}
+
+	this.oldSBMin = scaledBMin;
+	this.oldSBMax = scaledBMax;
 
 
 	//Calculate various constants
@@ -285,6 +318,7 @@ DisplayGraph.prototype.drawGraph = function(buffersToDraw, colors) {
 	let setBTimes = false;
 
 	//Actually plot the data for each buffer
+	this.ctx.lineWidth = this.options.strokeWidthGraph;
 	for (let b=0; b<buffersToDraw.length; b++) {
 		let buffer = buffersToDraw[b];
 
@@ -320,7 +354,7 @@ DisplayGraph.prototype.drawGraph = function(buffersToDraw, colors) {
 }
 
 //Flush all data beyond max time or sample point out of buffer
-DisplayGraph.prototype.flushOldBuffers = function(buffersToFlush) {
+A_Graph.prototype.flushOldBuffers = function(buffersToFlush) {
 	//first look for newest in all the buffers
 	let newestTime = 0;
 	for (let b = 0; b<buffersToFlush.length; b++) {
@@ -351,18 +385,29 @@ DisplayGraph.prototype.flushOldBuffers = function(buffersToFlush) {
 }
 
 //Generic "update" function that's run every tick (flush buffers, clear graph, draw graph)
-DisplayGraph.prototype.update = function() {
+A_Graph.prototype.update = function() {
 	this.flushOldBuffers(this.drawBuffers);
 	this.clearGraphArea();
+	if (this.options.drawZeroLine) {
+		this.drawZeroLine();
+	}
 	this.drawGraph(this.drawBuffers, this.drawColors);
 }
 
 //Construct a base graph onto the canvas
-DisplayGraph.prototype.construct = function() {
+A_Graph.prototype.construct = function() {
+	//Fix dpi scaling
+	let dpi = window.devicePixelRatio;
+	this.canvas.setAttribute('width', +getComputedStyle(this.canvas).getPropertyValue('width').slice(0,-2) * dpi);
+	this.canvas.setAttribute('height', +getComputedStyle(this.canvas).getPropertyValue('height').slice(0,-2) * dpi);
+
 	this.init();
 	this.clear();
 	this.drawOuterBox(this.options.strokeWidth, this.options.strokeWidth, this.options.width-(2*this.options.strokeWidth), this.options.height-(2*this.options.strokeWidth), 10);
 	this.drawAxes();
+	if (this.options.drawZeroLine) {
+		this.drawZeroLine();
+	}
 	this.drawTitles(this.titles.main, this.titles.x, this.titles.y);
 	this.drawXAxisNumbers(-this.options.bufferTime/1000, 0);
 	this.drawYAxisNumbers(-1.5, 1.5);

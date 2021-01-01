@@ -9,54 +9,33 @@
 	</head>
 
 	<body>
-		<nav class="navbar navbar-expand-lg navbar-light bg-light nav-main">
-			<li class="navbar-brand brand-large" href="#">Flight Club Alpha V1</li>
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-			</button>
-			<div class="collapse navbar-collapse" id="navbarNav">
-			<ul class="navbar-nav px-5">
-				<li class="nav-item px-3">
-					<button class="btn btn-dark" id="menuSixPack" onclick="menuChange('sixPack')">Six Pack</button>
-				</li>
-				<li class="nav-item px-3">
-					<button class="btn btn-light" id="menuBattManagement" onclick="menuChange('batteryManagement')">Battery Management</button>
-				</li>
-				<li class="nav-item px-3">
-					<button class="btn btn-light" id="menuRawData" onclick="menuChange('rawData')">Raw Data</button>
-				</li>
-			</ul>
-			</div>
-		</nav>
-		<br>
-
-		<div class="container" id="menu-sixPack" style="display: block">
-		</div>
-
-		<div class="container" id="menu-batteryManagement" style="display: none">
-			<canvas style="padding-left: 10px" id="c-cell-voltage"></canvas>
-			<canvas style="padding-left: 10px" id="c-kW-draw"></canvas>
-		</div>
-
-		<div class="container" id="menu-rawData" style="display: none">
-			<canvas style="padding-left: 10px" id="c-raw-gyro"></canvas>
-			<canvas style="padding-left: 10px" id="c-raw-accel"></canvas>
-			<canvas style="padding-left: 10px" id="c-raw-alt"></canvas>
+		<div id="main">
+			<canvas id="c-raw-gyro"></canvas>
+			<canvas id="c-raw-accel"></canvas>
+			<canvas id="c-ori-x"></canvas>
+			<canvas id="c-ori-y"></canvas>
+			<canvas id="c-ori-z"></canvas>
+			<canvas id="c-title"></canvas>
 			<br>
-			<canvas style="padding-left: 10px" id="c-ori-x"></canvas>
-			<canvas style="padding-left: 10px" id="c-ori-y"></canvas>
-			<canvas style="padding-left: 10px" id="c-ori-z"></canvas>
+			<canvas id="c-raw-alt"></canvas>
+			<canvas id="c-yz-pos"></canvas>
+			<canvas id="c-yz-vel"></canvas>
+			<canvas id="c-state-ind"></canvas>
+			<canvas id="c-vertvel"></canvas>
+			
 		</div>
 
 		<nav class="nav fixed-bottom navbar-light bg-light justify-content-center">
 			<li class="navbar-brand text-danger" id="connect-status">Connection Status: Disconnected</li>
 		</nav>
 
-		<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+		<!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-		<script src="/js/AaronGraphLibrary.js"></script>
-		<script src="http://localhost:80/socket.io/socket.io.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script> -->
+		<script src="/js/A_Title.js"></script>
+		<script src="/js/A_Graph.js"></script>
+		<script src="/js/A_StateIndicator.js"></script>
+		<script src="socket.io/socket.io.js"></script>
 	</body>
 
 	<script>
@@ -71,9 +50,6 @@
 			stat.innerHTML = "Connection Status: OK";
 			stat.className = "navbar-brand";
 		});
-		socket.on('event', data => {
-			console.log("data get: "+data);
-		});
 		socket.on('disconnect', () => {
 			console.log("Disconnected from server");
 			let stat = document.getElementById("connect-status");
@@ -81,29 +57,62 @@
 			stat.className = "navbar-brand text-danger";
 		});
 
+		//Utility functions for resize
+		function getPageWidth() {
+		  return Math.max(
+		    document.body.scrollWidth,
+		    document.documentElement.scrollWidth,
+		    document.body.offsetWidth,
+		    document.documentElement.offsetWidth,
+		    document.documentElement.clientWidth
+		  );
+		}
+
+		function getPageHeight() {
+		  return Math.max(
+		    document.body.scrollHeight,
+		    document.documentElement.scrollHeight,
+		    document.body.offsetHeight,
+		    document.documentElement.offsetHeight,
+		    document.documentElement.clientHeight
+		  );
+		}
+
+		let topGraphs = 5;
+		let sideGraphs = 3;
+		let topGraphDims = [(getPageWidth()-topGraphs*10)/5.5, 0];
+		topGraphDims[1] = getPageHeight()/3.5;
+
 		let bufferGyro = [[], [], []]; //x, y, z
 		let bufferAccel = [[], [], []]; //x, y, z
 		let bufferAlt = [[]]; //alt
-		const rawGyroGraph = new DisplayGraph("c-raw-gyro", {
+		const rawGyroGraph = new A_Graph("c-raw-gyro", {
 			buffers: bufferGyro,
 			colors: ["#ff0000", "#00ff00", "#0000ff"],
-			title: "Raw Gyro Data",
-			titleX: "Time (sec)",
-			titleY: "Angular Velocity (deg/sec)"
+			drawZeroLine: true,
+			width: topGraphDims[0],
+			height: topGraphDims[1],
+			title: "IMU Gyroscopes",
+			titleX: "sec",
+			titleY: "deg/sec"
 		});
-		const rawAccelGraph = new DisplayGraph("c-raw-accel", {
+		const rawAccelGraph = new A_Graph("c-raw-accel", {
 			buffers: bufferAccel,
+			width: topGraphDims[0],
+			height: topGraphDims[1],
 			colors: ["#ff0000", "#00ff00", "#0000ff"],
-			title: "Raw Accel Data",
-			titleX: "Time (sec)",
-			titleY: "Acceleration (m/sec^2)"
+			title: "IMU Accelerometers",
+			titleX: "sec",
+			titleY: "m/sec^2"
 		});
-		const rawAltGraph = new DisplayGraph("c-raw-alt", {
+		const rawAltGraph = new A_Graph("c-raw-alt", {
 			buffers: bufferAlt,
+			width: topGraphDims[0],
+			height: topGraphDims[1],
 			colors: ["#000"],
-			title: "Raw Altitude Data",
-			titleX: "Time (sec)",
-			titleY: "Altitude (ft)"
+			title: "Altitude",
+			titleX: "sec",
+			titleY: "m AGL"
 		});
 		socket.on("data-raw-gyro", data => {
 			bufferGyro[0].push([data.x, data.time]);
@@ -122,25 +131,31 @@
 		const bufferOriX = [[]]; //x
 		const bufferOriY = [[]]; //y
 		const bufferOriZ = [[]]; //z
-		const rawOriXGraph = new DisplayGraph("c-ori-x", {
+		const rawOriXGraph = new A_Graph("c-ori-x", {
 			buffers: bufferOriX,
-			colors: ["#000"],
+			width: topGraphDims[0],
+			height: topGraphDims[1],
+			colors: ["#fff"],
 			title: "Body Orientation X",
-			titleX: "Time (sec)",
+			titleX: "sec",
 			titleY: "deg"
 		});
-		const rawOriYGraph = new DisplayGraph("c-ori-y", {
+		const rawOriYGraph = new A_Graph("c-ori-y", {
 			buffers: bufferOriY,
-			colors: ["#000"],
+			width: topGraphDims[0],
+			height: topGraphDims[1],
+			colors: ["#fff"],
 			title: "Body Orientation Y",
-			titleX: "Time (sec)",
+			titleX: "sec",
 			titleY: "deg"
 		});
-		const rawOriZGraph = new DisplayGraph("c-ori-z", {
+		const rawOriZGraph = new A_Graph("c-ori-z", {
 			buffers: bufferOriZ,
-			colors: ["#000"],
+			width: topGraphDims[0],
+			height: topGraphDims[1],
+			colors: ["#fff"],
 			title: "Body Orientation Z",
-			titleX: "Time (sec)",
+			titleX: "sec",
 			titleY: "deg"
 		});
 		socket.on("data-ori", data => {
@@ -149,51 +164,58 @@
 			bufferOriZ[0].push([data.z, data.time]);
 		})
 
-		const menuChange = newMenu => {
-			let light = [];
-			let dark = [];
-			let hide = [];
-			let show = [];
-			if (newMenu == "sixPack") {
-				light.push("menuBattManagement");
-				light.push("menuRawData");
-				dark.push("menuSixPack");
+		const bufferYZPos = [[], []];
+		const posYZGraph = new A_Graph("c-yz-pos", {
+			buffers: bufferYZPos,
+			width: topGraphDims[0],
+			height: topGraphDims[1],
+			colors: ["#f00", "#ff0"],
+			title: "YZ Position",
+			titleX: "sec",
+			titleY: "m"
+		});
+		socket.on("data-yz-pos", data => {
+			bufferYZPos[0].push([data.yPos, data.time]);
+			bufferYZPos[1].push([data.zPos, data.time]);
+		})
+		const bufferYZVel = [[], []];
+		const velYZGraph = new A_Graph("c-yz-vel", {
+			buffers: bufferYZVel,
+			width: topGraphDims[0],
+			height: topGraphDims[1],
+			colors: ["#f00", "#ff0"],
+			title: "YZ Velocity",
+			titleX: "sec",
+			titleY: "m/sec"
+		});
+		socket.on("data-yz-vel", data => {
+			bufferYZVel[0].push([data.yVel, data.time]);
+			bufferYZVel[1].push([data.zVel, data.time]);
+		})
 
-				hide.push("menu-rawData");
-				hide.push("menu-batteryManagement");
-				show.push("menu-sixPack");
-			} else if (newMenu == "batteryManagement") {
-				light.push("menuRawData");
-				light.push("menuSixPack");
-				dark.push("menuBattManagement");
 
-				hide.push("menu-rawData");
-				show.push("menu-batteryManagement");
-				hide.push("menu-sixPack");
-			} else {
-				light.push("menuBattManagement");
-				light.push("menuSixPack");
-				dark.push("menuRawData");
+		const titleTiming = new A_Title("c-title", {
+			width: getPageWidth()-(topGraphs*topGraphDims[0])-25,
+			height: topGraphDims[1]
+		});
+		socket.on("v-connect", data => {
+			titleTiming.startConnectTimer();
+		})
+		socket.on("v-disconnect", data => {
+			titleTiming.stopConnectTimer();
+		})
+		socket.on("m-start", data => {
+			titleTiming.startMissionTimer();
+		})
+		socket.on("m-stop", data => {
+			titleTiing.stopMissionTimer();
+		})
 
-				show.push("menu-rawData");
-				hide.push("menu-batteryManagement");
-				hide.push("menu-sixPack");
-			}
-
-			for (let i=0; i<light.length; i++) {
-				document.getElementById(light[i]).className = "btn btn-light";
-			}
-			for (let i=0; i<dark.length; i++) {
-				document.getElementById(dark[i]).className = "btn btn-dark";
-			}
-
-			for (let i=0; i<hide.length; i++) {
-				document.getElementById(hide[i]).style.display = "none";
-			}
-			for (let i=0; i<show.length; i++) {
-				document.getElementById(show[i]).style.display = "block";
-			}
-
-		}
+		const stateIndicator = new A_StateIndicator("c-state-ind", {
+			width: topGraphDims[0]
+		});
+		socket.on("v-state", data => {
+			stateIndicator.updateData(data);
+		})
 	</script>
 </html>
