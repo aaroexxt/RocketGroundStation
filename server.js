@@ -10,13 +10,13 @@ Main.js - Contains main server file
  * arising from the use of this software.
  *
  * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
+ * including commercial expressApplications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
  *
  *    1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
+ *    expressAppreciated but is not required.
  *
  *    2. Altered source versions must be plainly marked as such, and must not
  *    be misrepresented as being the original software.
@@ -42,12 +42,13 @@ Main.js - Contains main server file
  /* Dependency initialization */
 
  //Basic Dependencies
+const { app, BrowserWindow } = require('electron')
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const ejs = require('ejs');
-const app = express();
-const http = require('http').Server(app);
+const expressApp = express();
+const http = require('http').Server(expressApp);
 const io = require('socket.io')(http, {
   cors: {
     origin: "http://localhost",
@@ -66,18 +67,18 @@ const RequestHandler = require("./core/requestHandler.js");
 
 //Bluetooth?
 
-app.use(cors()); //enable cors
+expressApp.use(cors()); //enable cors
 
-app.use(bodyParser.urlencoded({ extended: true })); //, limit: '50mb' })); //bodyparser for getting json data
-app.use(bodyParser.json());
-app.use(express.static("assets")); //define a static assets directory
-app.set('view engine', 'ejs'); //ejs gang
+expressApp.use(bodyParser.urlencoded({ extended: true })); //, limit: '50mb' })); //bodyparser for getting json data
+expressApp.use(bodyParser.json());
+expressApp.use(express.static(path.join(__dirname,"assets"))); //define a static assets directory
+expressApp.set('view engine', 'ejs'); //ejs gang
 
-app.get('/status', (req, res) => {
+expressApp.get('/status', (req, res) => {
     return res.end(RequestHandler.SUCCESS());
 });
 
-app.use(function(req, res, next){ //anything else that doesn't match those filters
+expressApp.use(function(req, res, next){ //anything else that doesn't match those filters
 	res.render('index');
 });
 
@@ -124,8 +125,8 @@ io.on('connection', client => {
 	m-start => mission started, start MET timer
 	v-stop => mission stopped, stop MET timer
 
-	v-state => various state things (battV, rollV, servoV, state, pyroState, temp, signal, tlmRate, fixType, pDOP, horizAcc, vertAcc, gpsSats)
-
+	v-state => various state things (battV, rollV, servoV, vehicleState, pyroState, temp, signal, tlmRate, fixType, pDOP, horizAcc, vertAcc, gpsSats)
+	todo: load vehicle states from config file?
 	*/
 });
 
@@ -135,3 +136,30 @@ const port = process.env.PORT || 80;
 const server = http.listen(port, () => {
   console.log('RocketGroundStation is running on port', server.address().port);
 });
+
+function createWindow () {
+  const win = new BrowserWindow({
+    width: 1920,
+    height: 1080,
+    // autoHideMenuBar: true,
+    // useContentSize: true,
+    resizable:true
+  })
+
+  // win.loadFile(path.join(__dirname,"index.html"))
+   win.loadURL('http://localhost:80/');
+}
+
+app.whenReady().then(createWindow)
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
+  }
+})

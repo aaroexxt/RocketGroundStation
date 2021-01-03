@@ -12,23 +12,26 @@ var A_StateIndicator = function(canvasID, opts) {
 		width: 350, //px
 		height: 150, //px
 		heightBanner: 50,
+		bannerDistFromEdge: 10,
 		dataColHeight: 30,
 		fpsUpdate: 30,
 
 		/* DRAW OPTIONS (stroke width, default color, etc) */
 		strokeWidth: 1, //px
-		titleFontSize: 30, //px (15 big)
+		stateFontSize: 20, //px (15 big)
 		dataFontSize: 12,
+		barFontSize: 8,
+		rowDistance: 0,
 		bgColor: "#000", //html color
 		strokeColor: "#ddd", //html color
-		titleColor: "#a00",
 
 		/* OTHER OPTIONS */
 		states: [
 			["Startup", "#fff"],
-			["PostStartup", "#f00"]
+			["PostStartup", "#0c0"]
 		]
-	}
+	},
+	this.defaultState = ["Disconnected", "#e00"];
 
 	//Now, we loop through opts to see if we should override any of the default options
 	let keys = Object.keys(this.options);
@@ -40,39 +43,36 @@ var A_StateIndicator = function(canvasID, opts) {
 		}
 	}
 
-	this.construct();
-
 	this.data = [
-		["battV", "AVI Batt", "V", 0],
-		["state", "Sys State", "", 0],
+		["battV", "AVI Batt", "V", -1],
+		["vehicleState", "Sys State", "", -1],
 
-		["rollV", "RollReg", "V", 0],
+		["rollV", "RollReg", "V", -1],
 		["pyroState", "Pyro State", "", false],
 
-		["servoV", "ServoReg", "V", 0],
-		["temp", "Board T", "°F", 0],
+		["servoV", "ServoReg", "V", -1],
+		["temp", "Board T", "°F", -1],
 
-		["signal", "SigStrength", "dbm", 0],
-		["tlmRate", "TLM Rate", "p/sec", 0],
+		["signal", "SigStrength", "dbm", -1],
+		["tlmRate", "TLM Rate", "p/sec", -1],
 
-		["pDOP", "pDOP", "", 0],
-		["gpsSats", "GPS Sats", "", 0],
+		["pDOP", "pDOP", "", -1],
+		["gpsSats", "GPS Sats", "", -1],
 
-		["horizAcc", "UNCHoriz", "m", 0],
-		["vertAcc", "UNCVert", "m", 0]
+		["horizAcc", "UNCHoriz", "m", -1],
+		["vertAcc", "UNCVert", "m", -1]
 	]
 
 	let barWidth = this.options.width/2.2;
-	let barHeight = (this.options.height-this.options.heightBanner)/(this.data.length/2);
+	let barHeight = (this.options.height-this.options.heightBanner)/(this.data.length/2)-2;
 
-
-	console.log(barWidth, barHeight)
 	this.battVBar = new A_Bar(this.canvasID, {
 		width: barWidth,
 		height: barHeight,
-		x: this.getBarX("battV"),
-		y: this.getBarY("battV"),
-		fontSize: this.options.dataFontSize,
+		x: this.getDataX("battV"),
+		y: this.getDataY("battV"),
+		title: this.getBarTitle("battV"),
+		fontSize: this.options.barFontSize,
 		min: 9.6,
 		max: 12.6,
 		units: this.getBarUnits("battV")
@@ -80,9 +80,10 @@ var A_StateIndicator = function(canvasID, opts) {
 	this.rollVBar = new A_Bar(this.canvasID, {
 		width: barWidth,
 		height: barHeight,
-		x: this.getBarX("rollV"),
-		y: this.getBarY("rollV"),
-		fontSize: this.options.dataFontSize,
+		x: this.getDataX("rollV"),
+		y: this.getDataY("rollV"),
+		title: this.getBarTitle("rollV"),
+		fontSize: this.options.barFontSize,
 		min: 5.8,
 		max: 6,
 		units: this.getBarUnits("rollV")
@@ -90,9 +91,10 @@ var A_StateIndicator = function(canvasID, opts) {
 	this.servoVBar = new A_Bar(this.canvasID, {
 		width: barWidth,
 		height: barHeight,
-		x: this.getBarX("servoV"),
-		y: this.getBarY("servoV"),
-		fontSize: this.options.dataFontSize,
+		x: this.getDataX("servoV"),
+		y: this.getDataY("servoV"),
+		title: this.getBarTitle("servoV"),
+		fontSize: this.options.barFontSize,
 		min: 8,
 		max: 8.4,
 		units: this.getBarUnits("servoV")
@@ -100,9 +102,10 @@ var A_StateIndicator = function(canvasID, opts) {
 	this.sigBar = new A_Bar(this.canvasID, {
 		width: barWidth,
 		height: barHeight,
-		x: this.getBarX("signal"),
-		y: this.getBarY("signal"),
-		fontSize: this.options.dataFontSize,
+		x: this.getDataX("signal"),
+		y: this.getDataY("signal"),
+		title: this.getBarTitle("signal"),
+		fontSize: this.options.barFontSize,
 		min: -90,
 		max: -20,
 		units: this.getBarUnits("signal")
@@ -110,18 +113,19 @@ var A_StateIndicator = function(canvasID, opts) {
 	this.pdopBar = new A_Bar(this.canvasID, {
 		width: barWidth,
 		height: barHeight,
-		x: this.getBarX("pDOP"),
-		y: this.getBarY("pDOP"),
-		fontSize: this.options.dataFontSize,
+		x: this.getDataX("pDOP"),
+		y: this.getDataY("pDOP"),
+		title: this.getBarTitle("pDOP"),
+		fontSize: this.options.barFontSize,
 		min: 6,
 		max: 1.25,
 		units: this.getBarUnits("pDOP")
 	});
 
-	this.construct();
+	this.updateData([]);
 
 
-	// (battV, rollV, servoV, state, pyroState, temp, signal, tlmRate, fixType, pDOP, horizAcc, vertAcc, gpsSats)
+	// (battV, rollV, servoV, vehicleState, pyroState, temp, signal, tlmRate, fixType, pDOP, horizAcc, vertAcc, gpsSats)
 
 	//this.updateInterval = setInterval(() => {this.update();}, 1000/this.options.fpsUpdate);
 }
@@ -151,9 +155,8 @@ A_StateIndicator.prototype.update = function(data) {
 }
 
 
-A_StateIndicator.prototype.drawOuterBox = function(x, y, width, height, radius) {
+A_StateIndicator.prototype.drawOuterBox = function(x, y, width, height, radius, fill) {
 	this.ctx.strokeStyle = this.options.strokeColor;
-	this.ctx.fillStyle = this.options.strokeColor;
 	this.ctx.lineWidth = this.options.strokeWidth;
 
 	if (typeof radius === 'number') {
@@ -177,9 +180,13 @@ A_StateIndicator.prototype.drawOuterBox = function(x, y, width, height, radius) 
 	this.ctx.quadraticCurveTo(x, y, x + radius.tl, y);
 	this.ctx.closePath();
 	this.ctx.stroke();
+
+	if (fill) {
+		this.ctx.fill();
+	}
 }
 
-A_StateIndicator.prototype.getBarX = function(name) {
+A_StateIndicator.prototype.getDataX = function(name) {
 	for (let i=0; i<this.data.length; i++) {
 		if (this.data[i][0] == name) {
 			return 5+(i%2)*(this.options.width/2);
@@ -188,11 +195,11 @@ A_StateIndicator.prototype.getBarX = function(name) {
 	return 0;
 }
 
-A_StateIndicator.prototype.getBarY = function(name) {
+A_StateIndicator.prototype.getDataY = function(name) {
 	for (let i=0; i<this.data.length; i++) {
 		if (this.data[i][0] == name) {
-			let barHeight = (this.options.height-this.options.heightBanner)/(this.data.length/2);
-			return this.options.heightBanner+(barHeight*(i/2));
+			let barHeight = ((this.options.height-this.options.heightBanner)/(this.data.length/2));
+			return this.options.heightBanner+((barHeight+this.options.rowDistance)*(Math.floor(i/2)))-5;
 		}
 	}
 	return 0;
@@ -202,6 +209,24 @@ A_StateIndicator.prototype.getBarUnits = function(name) {
 	for (let i=0; i<this.data.length; i++) {
 		if (this.data[i][0] == name) {
 			return this.data[i][2];
+		}
+	}
+	return "";
+}
+
+A_StateIndicator.prototype.getBarTitle = function(name) {
+	for (let i=0; i<this.data.length; i++) {
+		if (this.data[i][0] == name) {
+			return this.data[i][1];
+		}
+	}
+	return "";
+}
+
+A_StateIndicator.prototype.getDataValue = function(name) {
+	for (let i=0; i<this.data.length; i++) {
+		if (this.data[i][0] == name) {
+			return this.data[i][3];
 		}
 	}
 	return "";
@@ -218,12 +243,91 @@ A_StateIndicator.prototype.drawDivLine = function() {
 	this.ctx.stroke();
 }
 
+A_StateIndicator.prototype.drawStateBanner = function(state) {
+	let stateText, stateColor;
+	if (state == -1 || state == "") {
+		stateText = this.defaultState[0];
+		stateColor = this.defaultState[1];
+	}
+
+	this.ctx.fillStyle = stateColor;
+	this.drawOuterBox(this.options.bannerDistFromEdge, this.options.bannerDistFromEdge, this.options.width-2*this.options.bannerDistFromEdge, this.options.heightBanner-2*this.options.bannerDistFromEdge, 5, true);
+
+	this.ctx.fillStyle = this.options.strokeColor;
+	this.ctx.font = this.options.stateFontSize+"px Helvetica";
+	let width = this.ctx.measureText(stateText).width;
+	this.ctx.fillText(stateText, (this.options.width-width)/2, this.options.bannerDistFromEdge+this.options.stateFontSize+2)
+}
+
+A_StateIndicator.prototype.updateData = function(dIn) {
+	// (battV, rollV, servoV, vehicleState, pyroState, temp, signal, tlmRate, fixType, pDOP, horizAcc, vertAcc, gpsSats)
+	//Run thru data in and copy to this.data where applicable
+	if (!dIn) return;
+	let keys = Object.keys(this.data);
+	for (let i=0; i<keys.length; i++) {
+		if (dIn.hasOwnProperty(keys[i])) { //does it exist?
+			if (typeof dIn[keys[i]] != "undefined") { //does it exist pt 2?
+				this.data[keys[i]] = dIn[keys[i]]; //override it!
+			}
+		}
+	}
+
+	this.construct(); //start with banner draw in reconstruct
+
+	for (let i=0; i<this.data.length; i++) {
+		let d = this.data[i];
+		switch (d[0]) {
+			case "battV":
+				this.battVBar.update(d[3]);
+				break;
+			case "rollV":
+				this.rollVBar.update(d[3]);
+				break;
+			case "servoV":
+				this.servoVBar.update(d[3]);
+				break;
+			case "signal":
+				this.sigBar.update(d[3]);
+				break;
+			case "pDOP":
+				this.pdopBar.update(d[3]);
+				break;
+			default:
+				break;
+		}
+
+		//do non bar updates
+		this.ctx.strokeStyle = this.options.strokeColor;
+		this.ctx.fillStyle = this.options.strokeColor;
+		this.ctx.lineWidth = this.options.strokeWidth;
+		this.ctx.font = this.options.dataFontSize+"px Helvetica";
+
+		let tX = this.getDataX(d[0]);
+		let tY = this.getDataY(d[0])+this.options.dataFontSize;
+
+		switch (d[0]) {
+			case "pyroState":
+			case "gpsSats":
+			case "horizAcc":
+			case "vertAcc":
+			case "temp":
+			case "tlmRate":
+			case "vehicleState":
+				this.ctx.fillText(d[1]+": "+d[3], tX, tY);
+				break;
+			default:
+				break;
+
+		}
+	}
+}
+
 
 A_StateIndicator.prototype.construct = function() {
-	// this.clear();
+	this.clear();
 	this.drawOuterBox(this.options.strokeWidth, this.options.strokeWidth, this.options.width-(2*this.options.strokeWidth), this.options.height-(2*this.options.strokeWidth), 10);
 	this.drawDivLine();
 
-	// this.drawStateBanner();
+	this.drawStateBanner(this.getDataValue("vehicleState"));
 	let x = 0;
 }

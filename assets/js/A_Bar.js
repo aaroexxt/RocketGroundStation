@@ -32,7 +32,7 @@ var A_Bar = function(canvasID, opts) {
 		fontSize: 12, //px (10 big)
 		units: "V",
 		title: "",
-		bgColor: "#002", //html color
+		bgColor: "#000", //html color
 		strokeColor: "#ddd" //html color
 	}
 
@@ -60,7 +60,7 @@ var A_Bar = function(canvasID, opts) {
 A_Bar.prototype.drawOuterBox = function(x, y, width, height, radius) {
 	this.ctx.strokeStyle = this.options.strokeColor;
 	this.ctx.fillStyle = this.options.strokeColor;
-	this.ctx.lineWidth = this.options.strokeWidth;
+	this.ctx.lineWidth = this.options.strokeWidth/2;
 
 	if (typeof radius === 'number') {
 		radius = {tl: radius, tr: radius, br: radius, bl: radius};
@@ -86,7 +86,7 @@ A_Bar.prototype.drawOuterBox = function(x, y, width, height, radius) {
 }
 
 A_Bar.prototype.update = function(value) {
-	let text = this.options.title+String(value)+this.options.units;
+	let text = ((this.options.title!="")?this.options.title+": ":"")+String(value)+this.options.units;
 	value = constrain(value, this.options.min, this.options.max); //constrain after text is made
 	this.ctx.font = this.options.fontSize+"px Helvetica";
 	let tWidth = this.ctx.measureText(text).width+this.options.strokeWidth*3;
@@ -99,7 +99,7 @@ A_Bar.prototype.update = function(value) {
 	this.ctx.fillRect(this.options.x, this.options.y, this.options.width, this.options.height);
 
 	//Draw background (in 1px strips)
-	let color = this.startColorRGB;
+	let color = JSON.parse(JSON.stringify(this.startColorRGB));
 	if (this.options.horizontal) {
 		let pxCenter = map(value, this.options.min, this.options.max, twDiv2+tWidth, this.options.width-twDiv2);
 		let barWidth = (this.options.width-tWidth);
@@ -171,6 +171,7 @@ function hexToRgb(hex) {
 }
 
 function componentToHex(c) {
+	c = constrain(c, 0, 255);
   var hex = Math.floor(c).toString(16);
   return hex.length == 1 ? "0" + hex : hex;
 }
