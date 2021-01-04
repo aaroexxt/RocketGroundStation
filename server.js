@@ -110,6 +110,10 @@ io.on('connection', client => {
 		clearInterval(interv);
 	});
 
+	client.on('uiButton', data => {
+		console.log("btn fire: "+data);
+	})
+
 	/*
 	Messages that can be sent that need to be connected to rocket
 	
@@ -125,8 +129,29 @@ io.on('connection', client => {
 	m-start => mission started, start MET timer
 	v-stop => mission stopped, stop MET timer
 
+	v-tvc => tvc update (y, z, active, roll%, twr)
+
 	v-state => various state things (battV, rollV, servoV, vehicleState, pyroState, temp, signal, tlmRate, fixType, pDOP, horizAcc, vertAcc, gpsSats)
+
+	from software
+	r-launch => launch rocket, start countdown seq
+	r-abort => abort countdown sequence or rocket
+	r-vCheck => perform vehicle check on rocket
+	r-tvcCheck => perform tvc check on rocket
+	r-pyroArm => arm pyro system
+	r-pyroDisarm => disarm pyro system
+	r-fire-1 => fire pyro 1
+	r-fire-2 => fire pyro 2
+	r-fire-3 => fire pyro 3
+	r-fire-4 => fire pyro 4
+	r-fire-5 => fire pyro 5
+	r-calib => calibrate/bias sensor system
+	r-vReset => put vehicle into init state
+	r-setLaunch => set launch site from gps pos
+
+
 	todo: load vehicle states from config file?
+	also todo: load buttons from cfg file?
 	*/
 });
 

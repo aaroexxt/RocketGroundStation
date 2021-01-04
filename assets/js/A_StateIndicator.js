@@ -11,17 +11,15 @@ var A_StateIndicator = function(canvasID, opts) {
 		/* BASIC PARAMS (width, height, etc) */
 		width: 350, //px
 		height: 150, //px
-		heightBanner: 50,
+		heightBanner: 55,
 		bannerDistFromEdge: 10,
 		dataColHeight: 30,
-		fpsUpdate: 30,
 
 		/* DRAW OPTIONS (stroke width, default color, etc) */
 		strokeWidth: 1, //px
-		stateFontSize: 20, //px (15 big)
-		dataFontSize: 12,
-		barFontSize: 8,
-		rowDistance: 0,
+		stateFontSize: 25, //px (15 big)
+		dataFontSize: 14,
+		barFontSize: 14,
 		bgColor: "#000", //html color
 		strokeColor: "#ddd", //html color
 
@@ -44,23 +42,30 @@ var A_StateIndicator = function(canvasID, opts) {
 	}
 
 	this.data = [
-		["battV", "AVI Batt", "V", -1],
+		["battV", "AVIBatt", "V", -1],
 		["vehicleState", "Sys State", "", -1],
 
-		["rollV", "RollReg", "V", -1],
+		["rollV", "Roll", "V", -1],
 		["pyroState", "Pyro State", "", false],
 
-		["servoV", "ServoReg", "V", -1],
+		["servoV", "Servo", "V", -1],
 		["temp", "Board T", "°F", -1],
 
-		["signal", "SigStrength", "dbm", -1],
+		["signal", "Sig", "dbm", -1],
 		["tlmRate", "TLM Rate", "p/sec", -1],
 
 		["pDOP", "pDOP", "", -1],
 		["gpsSats", "GPS Sats", "", -1],
 
 		["horizAcc", "UNCHoriz", "m", -1],
-		["vertAcc", "UNCVert", "m", -1]
+		["vertAcc", "UNCVert", "m", -1],
+
+		["pCont1", "PyroCh1", "", false],
+		["pCont2", "PyroCh2", "", false],
+		["pCont3", "PyroCh3", "", false],
+		["pCont4", "PyroCh4", "", false],
+		["pCont5", "PyroCh5", "", false],
+		["pCont6", "PyroCh6", "", false],
 	]
 
 	let barWidth = this.options.width/2.2;
@@ -127,7 +132,6 @@ var A_StateIndicator = function(canvasID, opts) {
 
 	// (battV, rollV, servoV, vehicleState, pyroState, temp, signal, tlmRate, fixType, pDOP, horizAcc, vertAcc, gpsSats)
 
-	//this.updateInterval = setInterval(() => {this.update();}, 1000/this.options.fpsUpdate);
 }
 
 A_StateIndicator.prototype.clear = function() {
@@ -196,10 +200,11 @@ A_StateIndicator.prototype.getDataX = function(name) {
 }
 
 A_StateIndicator.prototype.getDataY = function(name) {
+	let barHeight = ((this.options.height-this.options.heightBanner)/(this.data.length/2));
+	let rowDistance = (this.options.height-this.options.heightBanner-(Math.ceil(this.data.length/2)*barHeight))/(this.data.length)
 	for (let i=0; i<this.data.length; i++) {
 		if (this.data[i][0] == name) {
-			let barHeight = ((this.options.height-this.options.heightBanner)/(this.data.length/2));
-			return this.options.heightBanner+((barHeight+this.options.rowDistance)*(Math.floor(i/2)))-5;
+			return this.options.heightBanner+((barHeight+rowDistance)*(Math.floor(i/2)))-5;
 		}
 	}
 	return 0;
@@ -239,7 +244,7 @@ A_StateIndicator.prototype.drawDivLine = function() {
 
 	this.ctx.beginPath();
 	this.ctx.moveTo(this.options.width/2, this.options.height-this.options.strokeWidth);
-	this.ctx.lineTo(this.options.width/2, this.options.heightBanner+10);
+	this.ctx.lineTo(this.options.width/2, this.options.heightBanner-5);
 	this.ctx.stroke();
 }
 
@@ -256,7 +261,7 @@ A_StateIndicator.prototype.drawStateBanner = function(state) {
 	this.ctx.fillStyle = this.options.strokeColor;
 	this.ctx.font = this.options.stateFontSize+"px Helvetica";
 	let width = this.ctx.measureText(stateText).width;
-	this.ctx.fillText(stateText, (this.options.width-width)/2, this.options.bannerDistFromEdge+this.options.stateFontSize+2)
+	this.ctx.fillText(stateText, (this.options.width-width)/2, this.options.bannerDistFromEdge+(this.options.heightBanner/2));
 }
 
 A_StateIndicator.prototype.updateData = function(dIn) {
@@ -303,17 +308,31 @@ A_StateIndicator.prototype.updateData = function(dIn) {
 		this.ctx.font = this.options.dataFontSize+"px Helvetica";
 
 		let tX = this.getDataX(d[0]);
-		let tY = this.getDataY(d[0])+this.options.dataFontSize;
+		let tY = this.getDataY(d[0])+this.options.dataFontSize+2;
 
 		switch (d[0]) {
-			case "pyroState":
 			case "gpsSats":
 			case "horizAcc":
 			case "vertAcc":
 			case "temp":
 			case "tlmRate":
 			case "vehicleState":
-				this.ctx.fillText(d[1]+": "+d[3], tX, tY);
+				this.ctx.fillText(d[1]+": "+d[3]+d[2], tX, tY);
+				break;
+			case "pyroState":
+				this.ctx.fillStyle = d[3]?"#0f0":"#f00";
+				this.ctx.fillText(d[1]+": "+(d[3]?"Armed":"Disarmed"), tX, tY);
+				this.ctx.fillStyle = this.options.strokeColor;
+				break;
+			case "pCont1":
+			case "pCont2":
+			case "pCont3":
+			case "pCont4":
+			case "pCont5":
+			case "pCont6":
+				this.ctx.fillStyle = d[3]?"#0f0":"#aa0";
+				this.ctx.fillText(d[1]+": "+(d[3]?"Cont":"NC"), tX, tY);
+				this.ctx.fillStyle = this.options.strokeColor;
 				break;
 			default:
 				break;
@@ -324,6 +343,16 @@ A_StateIndicator.prototype.updateData = function(dIn) {
 
 
 A_StateIndicator.prototype.construct = function() {
+	//setup canvas
+	this.ctx.textBaseline = 'top';
+	this.canvas.width = this.options.width;
+	this.canvas.height = this.options.height;
+
+	// //Fix dpi scaling
+	// let dpi = window.devicePixelRatio;
+	// this.canvas.setAttribute('width', +getComputedStyle(this.canvas).getPropertyValue('width').slice(0,-2) * dpi);
+	// this.canvas.setAttribute('height', +getComputedStyle(this.canvas).getPropertyValue('height').slice(0,-2) * dpi);
+
 	this.clear();
 	this.drawOuterBox(this.options.strokeWidth, this.options.strokeWidth, this.options.width-(2*this.options.strokeWidth), this.options.height-(2*this.options.strokeWidth), 10);
 	this.drawDivLine();

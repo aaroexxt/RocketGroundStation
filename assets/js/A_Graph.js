@@ -396,10 +396,10 @@ A_Graph.prototype.update = function() {
 
 //Construct a base graph onto the canvas
 A_Graph.prototype.construct = function() {
-	//Fix dpi scaling
-	let dpi = window.devicePixelRatio;
-	this.canvas.setAttribute('width', +getComputedStyle(this.canvas).getPropertyValue('width').slice(0,-2) * dpi);
-	this.canvas.setAttribute('height', +getComputedStyle(this.canvas).getPropertyValue('height').slice(0,-2) * dpi);
+	// //Fix dpi scaling
+	// let dpi = window.devicePixelRatio;
+	// this.canvas.setAttribute('width', +getComputedStyle(this.canvas).getPropertyValue('width').slice(0,-2) * dpi);
+	// this.canvas.setAttribute('height', +getComputedStyle(this.canvas).getPropertyValue('height').slice(0,-2) * dpi);
 
 	this.init();
 	this.clear();

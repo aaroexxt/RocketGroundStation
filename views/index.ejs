@@ -10,18 +10,31 @@
 
 	<body>
 		<div id="main">
-			<canvas id="c-raw-gyro"></canvas>
-			<canvas id="c-raw-accel"></canvas>
-			<canvas id="c-ori-x"></canvas>
-			<canvas id="c-ori-y"></canvas>
-			<canvas id="c-ori-z"></canvas>
-			<canvas id="c-title"></canvas>
-			<br>
-			<canvas id="c-raw-alt"></canvas>
-			<canvas id="c-yz-pos"></canvas>
-			<canvas id="c-yz-vel"></canvas>
-			<canvas id="c-state-ind"></canvas>
-			<canvas id="c-vertvel"></canvas>
+			<center>
+				<canvas id="c-raw-gyro"></canvas>
+				<canvas id="c-raw-accel"></canvas>
+				<canvas id="c-ori-x"></canvas>
+				<canvas id="c-ori-y"></canvas>
+				<canvas id="c-ori-z"></canvas>
+				<canvas id="c-title"></canvas>
+			</center>
+			<div id="m-left">
+				<canvas id="c-state-ind"></canvas>
+				<br>
+				<canvas id="c-yz-pos"></canvas>
+				<br>
+				<canvas id="c-yz-vel"></canvas>
+			</div>
+			<div id="m-right">
+				<canvas id="c-ctrl-panel"></canvas>
+				<br>
+				<canvas id="c-raw-alt"></canvas>
+				<br>
+				<canvas id="c-tvc-ind"></canvas>
+			</div>
+			<center>
+				<canvas id="c-rocket-view"></canvas>
+			</center>
 			
 		</div>
 
@@ -32,10 +45,15 @@
 		<!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script> -->
+		<script src="/js/three.min.js"></script>
+		<script src="/js/STLLoader.js"></script>
 		<script src="/js/A_Title.js"></script>
 		<script src="/js/A_Graph.js"></script>
 		<script src="/js/A_Bar.js"></script>
 		<script src="/js/A_StateIndicator.js"></script>
+		<script src="/js/A_ButtonMenu.js"></script>
+		<script src="/js/A_TVCIndicator.js"></script>
+		<script src="/js/A_RocketViewer.js"></script>
 		<script src="socket.io/socket.io.js"></script>
 	</body>
 
@@ -79,10 +97,9 @@
 		  );
 		}
 
-		let topGraphs = 5;
-		let sideGraphs = 3;
-		let topGraphDims = [(getPageWidth()-topGraphs*10)/5.5, 0];
-		topGraphDims[1] = getPageHeight()/4.5;
+		let topGraphs = 5.5;
+		let sideGraphs = 4;
+		let canvasDims = [(getPageWidth()-(Math.floor(topGraphs)*9))/topGraphs, (getPageHeight()-65)/sideGraphs];
 
 		let bufferGyro = [[], [], []]; //x, y, z
 		let bufferAccel = [[], [], []]; //x, y, z
@@ -91,16 +108,16 @@
 			buffers: bufferGyro,
 			colors: ["#ff0000", "#00ff00", "#0000ff"],
 			drawZeroLine: true,
-			width: topGraphDims[0],
-			height: topGraphDims[1],
+			width: canvasDims[0],
+			height: canvasDims[1],
 			title: "IMU Gyroscopes",
 			titleX: "sec",
 			titleY: "deg/sec"
 		});
 		const rawAccelGraph = new A_Graph("c-raw-accel", {
 			buffers: bufferAccel,
-			width: topGraphDims[0],
-			height: topGraphDims[1],
+			width: canvasDims[0],
+			height: canvasDims[1],
 			colors: ["#ff0000", "#00ff00", "#0000ff"],
 			title: "IMU Accelerometers",
 			titleX: "sec",
@@ -108,8 +125,8 @@
 		});
 		const rawAltGraph = new A_Graph("c-raw-alt", {
 			buffers: bufferAlt,
-			width: topGraphDims[0],
-			height: topGraphDims[1],
+			width: canvasDims[0],
+			height: canvasDims[1],
 			colors: ["#000"],
 			title: "Altitude",
 			titleX: "sec",
@@ -134,8 +151,8 @@
 		const bufferOriZ = [[]]; //z
 		const rawOriXGraph = new A_Graph("c-ori-x", {
 			buffers: bufferOriX,
-			width: topGraphDims[0],
-			height: topGraphDims[1],
+			width: canvasDims[0],
+			height: canvasDims[1],
 			colors: ["#fff"],
 			title: "Body Orientation X",
 			titleX: "sec",
@@ -143,8 +160,8 @@
 		});
 		const rawOriYGraph = new A_Graph("c-ori-y", {
 			buffers: bufferOriY,
-			width: topGraphDims[0],
-			height: topGraphDims[1],
+			width: canvasDims[0],
+			height: canvasDims[1],
 			colors: ["#fff"],
 			title: "Body Orientation Y",
 			titleX: "sec",
@@ -152,8 +169,8 @@
 		});
 		const rawOriZGraph = new A_Graph("c-ori-z", {
 			buffers: bufferOriZ,
-			width: topGraphDims[0],
-			height: topGraphDims[1],
+			width: canvasDims[0],
+			height: canvasDims[1],
 			colors: ["#fff"],
 			title: "Body Orientation Z",
 			titleX: "sec",
@@ -168,8 +185,8 @@
 		const bufferYZPos = [[], []];
 		const posYZGraph = new A_Graph("c-yz-pos", {
 			buffers: bufferYZPos,
-			width: topGraphDims[0],
-			height: topGraphDims[1],
+			width: canvasDims[0],
+			height: canvasDims[1],
 			colors: ["#f00", "#ff0"],
 			title: "YZ Position",
 			titleX: "sec",
@@ -182,8 +199,8 @@
 		const bufferYZVel = [[], []];
 		const velYZGraph = new A_Graph("c-yz-vel", {
 			buffers: bufferYZVel,
-			width: topGraphDims[0],
-			height: topGraphDims[1],
+			width: canvasDims[0],
+			height: canvasDims[1],
 			colors: ["#f00", "#ff0"],
 			title: "YZ Velocity",
 			titleX: "sec",
@@ -196,8 +213,8 @@
 
 
 		const titleTiming = new A_Title("c-title", {
-			width: getPageWidth()-(topGraphs*topGraphDims[0])-25,
-			height: topGraphDims[1]
+			width: canvasDims[0]*0.5,
+			height: canvasDims[1]
 		});
 		socket.on("v-connect", data => {
 			titleTiming.startConnectTimer();
@@ -213,23 +230,36 @@
 		})
 
 		const stateIndicator = new A_StateIndicator("c-state-ind", {
-			width: topGraphDims[0]
+			width: canvasDims[0],
+			height: canvasDims[1]
 		});
 		socket.on("v-state", data => {
 			stateIndicator.updateData(data);
 		})
 
-		/*
-		Buttons
+		const controlPanel = new A_ButtonMenu("c-ctrl-panel", socket, {
+			width: canvasDims[0],
+			height: canvasDims[1]*1.5
+		})
 
-		Pyro Arm
-		Pyro Disarm
-		Vehicle Check
-		Auto-Launch
-		TVC Test
-		Abort
-		Calibrate Gyros
-		Calibrate Accels
-		*/
+		const TVCIndicator = new A_TVCIndicator("c-tvc-ind", {
+			width: canvasDims[0],
+			height: canvasDims[1]*0.5
+		});
+		socket.on("v-tvc", data => {
+			TVCIndicator.update({
+				yDeg: data.y,
+				zDeg: data.z,
+				active: data.active,
+				rollPercent: data.roll,
+				twr: data.twr
+			})
+		})
+
+		const rocketViewer = new A_RocketViewer("c-rocket-view", {
+			width: getPageWidth()-(2*canvasDims[0]),
+			height: getPageHeight()-canvasDims[1],
+			stl: "stl/rocket.stl"
+		})
 	</script>
 </html>

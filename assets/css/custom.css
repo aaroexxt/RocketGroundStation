@@ -15,3 +15,13 @@ body {
 .btn {
 	font-size: 1.5rem;
 }
+
+#m-left {
+	left: 0px;
+	position: absolute;
+}
+
+#m-right {
+	right: 0px;
+	position: absolute;
+}

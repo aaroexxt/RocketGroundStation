@@ -14,8 +14,8 @@ var A_Title = function(canvasID, opts) {
 
 		/* DRAW OPTIONS (stroke width, default color, etc) */
 		strokeWidth: 1, //px
-		titleFontSize: 75, //px (15 big)
-		timeFontSize: 13,
+		titleFontSize: 100, //px (15 big)
+		timeFontSize: 15,
 		bgColor: "#000", //html color
 		strokeColor: "#ddd", //html color
 		titleColor: "#a00",
@@ -190,20 +190,21 @@ A_Title.prototype.drawTimes = function() {
 	}
 
 	
-	let y = this.options.titleFontSize+5;
+	let y = this.options.titleFontSize+this.options.timeFontSize;
+	let yDist = (this.options.height-this.options.titleFontSize-this.options.timeFontSize)/textToDraw.length;
 	for (let i=0; i<textToDraw.length; i++) {
 		let width = this.ctx.measureText(textToDraw[i]).width;
 		this.ctx.fillText(textToDraw[i], (this.options.width/2)-(width/2), y);
-		y+= this.options.timeFontSize+10;
+		y+= yDist;
 	}
 }
 
 
 A_Title.prototype.construct = function() {
-	//Fix dpi scaling
-	let dpi = window.devicePixelRatio;
-	this.canvas.setAttribute('width', +getComputedStyle(this.canvas).getPropertyValue('width').slice(0,-2) * dpi);
-	this.canvas.setAttribute('height', +getComputedStyle(this.canvas).getPropertyValue('height').slice(0,-2) * dpi);
+	// //Fix dpi scaling
+	// let dpi = window.devicePixelRatio;
+	// this.canvas.setAttribute('width', +getComputedStyle(this.canvas).getPropertyValue('width').slice(0,-2) * dpi);
+	// this.canvas.setAttribute('height', +getComputedStyle(this.canvas).getPropertyValue('height').slice(0,-2) * dpi);
 
 	this.init();
 	this.clear();
