@@ -3,14 +3,13 @@ Title library meme
 Written by Aaron Becker
 */
 
-var A_RocketViewer = function(canvasID, opts) {
-	this.canvas = document.getElementById(canvasID);
-	this.ctx = this.canvas.getContext('2d');
+var A_RocketViewer = function(containerID, opts) {
+	this.container = document.getElementById(containerID);
 	this.options = { //setup default opts object
 		/* BASIC PARAMS (width, height, etc) */
 		width: 350, //px
 		height: 225, //px
-		fpsUpdate: 30,
+		fps: 30,
 
 		/* DRAW OPTIONS (stroke width, default color, etc) */
 		strokeWidth: 1, //px
@@ -36,71 +35,83 @@ var A_RocketViewer = function(canvasID, opts) {
 
 	this.construct();
 
-	this.updateInterval = setInterval(() => {this.update();}, 1000/this.options.fpsUpdate);
-}
-
-A_RocketViewer.prototype.init = function() {
-	this.canvas.width = this.options.width;
-	this.canvas.height = this.options.height;
-	this.ctx.fillStyle = this.options.bgColor;
-	this.ctx.lineWidth = this.options.strokeWidth;
-	this.ctx.textBaseline = 'top';
+	this.renderInterval = setInterval(() => {this.render();}, 1000/this.options.fpsUpdate);
 }
 
 A_RocketViewer.prototype.threeInit = function() {
-	this.camera = new THREE.PerspectiveCamera( 35, this.options.width/this.options.height, 1, 15 );
-	this.camera.position.set( 3, 0.15, 3 );
 
-	this.cameraTarget = new THREE.Vector3( 0, - 0.25, 0 );
+	this.camera = new THREE.PerspectiveCamera( 75, this.options.width/this.options.height, 1, 10000 );
+	this.camera.position.z = 1000;
+	this.camera.position.x = 1000;
+	this.camera.position.y = 2000;
 
 	this.scene = new THREE.Scene();
-	this.scene.background = new THREE.Color( 0x72645b );
-	this.scene.fog = new THREE.Fog( 0x72645b, 2, 15 );
+	// this.scene.background = new THREE.Color( 0x72645b );
+	// this.scene.fog = new THREE.Fog( 0x72645b, 2, 15 );
 	var _this = this;
 
 	// Ground
 
 	const plane = new THREE.Mesh(
-		new THREE.PlaneBufferGeometry( 40, 40 ),
+		new THREE.PlaneBufferGeometry( 10000, 10000 ),
 		new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
 	);
 	plane.rotation.x = - Math.PI / 2;
-	plane.position.y = - 0.5;
+	plane.position.y = 0;
 	this.scene.add( plane );
 
 	plane.receiveShadow = true;
 
 
-	const material = new THREE.MeshPhongMaterial( { color: 0xAAAAAA, specular: 0x111111, shininess: 200 } );
+	var material = new THREE.MeshLambertMaterial({
+        overdraw:true,
+        color: 0xfdd017,
+        flatShading: true
+    });
 
 	var loader = new THREE.STLLoader();
 	loader.load(this.options.stl, function ( geometry ) {
-
 		const mesh = new THREE.Mesh( geometry, material );
-
-		mesh.position.set( 0, - 0.37, - 0.6 );
-		mesh.rotation.set( - Math.PI / 2, 0, 0 );
-		mesh.scale.set( 2, 2, 2 );
-
 		mesh.castShadow = true;
 		mesh.receiveShadow = true;
+		_this.mesh = mesh;
 
 		_this.scene.add( mesh );
 
+		var center = new THREE.Vector3();
+		mesh.geometry.computeBoundingBox();
+		mesh.geometry.boundingBox.getCenter(center);
+		mesh.geometry.center();
+		mesh.position.copy(center);
+
 	} );
 
-	this.scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
+	var directionalLight = new THREE.DirectionalLight( 0xffffff );
+    directionalLight.position.x = 0; 
+    directionalLight.position.y = 0; 
+    directionalLight.position.z = 1; 
+    directionalLight.position.normalize();
+    this.scene.add( directionalLight );
 
-	this.addShadowedLight( 1, 1, 1, 0xffffff, 1.35 );
-	this.addShadowedLight( 0.5, 1, - 1, 0xffaa00, 1 );
+    const light = new THREE.HemisphereLight( 0xB1E1FF, 0xB97A20, 0.5 ); // soft white light
+	this.scene.add( light );
+
 	// renderer
 
-	renderer = new THREE.WebGLRenderer( { antialias: true, canvas: this.canvas } );
-	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize(this.options.width, this.options.height);
-	renderer.outputEncoding = THREE.sRGBEncoding;
+	this.renderer = new THREE.WebGLRenderer( { antialias: true} );
+	this.renderer.setPixelRatio( window.devicePixelRatio );
+	this.renderer.setSize(this.options.width, this.options.height);
+	this.renderer.outputEncoding = THREE.sRGBEncoding;
+	this.renderer.shadowMap.enabled = true;
+	this.renderer.background = "#fff";
 
-	renderer.shadowMap.enabled = true;
+
+	this.renderer.shadowMap.enabled = true;
+
+	this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+	this.controls.update();
+
+	this.container.appendChild( this.renderer.domElement );
 }
 
 A_RocketViewer.prototype.construct = function() {
@@ -109,37 +120,28 @@ A_RocketViewer.prototype.construct = function() {
 	// this.canvas.setAttribute('width', +getComputedStyle(this.canvas).getPropertyValue('width').slice(0,-2) * dpi);
 	// this.canvas.setAttribute('height', +getComputedStyle(this.canvas).getPropertyValue('height').slice(0,-2) * dpi);
 
-	this.init();
+	this.container.width = this.options.width;
+	this.container.height = this.options.height;
 
 	this.threeInit();
 
 	// this.drawOuterBox(this.options.strokeWidth, this.options.strokeWidth, this.options.width-(2*this.options.strokeWidth), this.options.height-(2*this.options.strokeWidth), 10);
 	// this.drawTitle();
 	// this.drawTimes();
+
+	this.render();
 }
 
-A_RocketViewer.prototype.update = function() {
-	this.clearTimesArea();
-	this.drawTimes();
+A_RocketViewer.prototype.render = function() {
+
+	// this.controls.update();
+	this.renderer.render( this.scene, this.camera );
 }
 
-A_RocketViewer.prototype.addShadowedLight = function( x, y, z, color, intensity ) {
-
-	const directionalLight = new THREE.DirectionalLight( color, intensity );
-	directionalLight.position.set( x, y, z );
-	this.scene.add( directionalLight );
-
-	directionalLight.castShadow = true;
-
-	const d = 1;
-	directionalLight.shadow.camera.left = - d;
-	directionalLight.shadow.camera.right = d;
-	directionalLight.shadow.camera.top = d;
-	directionalLight.shadow.camera.bottom = - d;
-
-	directionalLight.shadow.camera.near = 1;
-	directionalLight.shadow.camera.far = 4;
-
-	directionalLight.shadow.bias = - 0.002;
-
+A_RocketViewer.prototype.setRotation = function(x, y, z) {
+	if (!this.mesh) return;
+	let f = Math.PI/180;
+	this.mesh.rotation.x = x*f;
+	this.mesh.rotation.y = y*f;
+	this.mesh.rotation.z = z*f;
 }

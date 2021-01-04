@@ -33,7 +33,7 @@
 				<canvas id="c-tvc-ind"></canvas>
 			</div>
 			<center>
-				<canvas id="c-rocket-view"></canvas>
+				<div id="c-rocket-view"></div>
 			</center>
 			
 		</div>
@@ -47,6 +47,7 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script> -->
 		<script src="/js/three.min.js"></script>
 		<script src="/js/STLLoader.js"></script>
+		<script src="/js/OrbitControls.js"></script>
 		<script src="/js/A_Title.js"></script>
 		<script src="/js/A_Graph.js"></script>
 		<script src="/js/A_Bar.js"></script>
@@ -180,6 +181,7 @@
 			bufferOriX[0].push([data.x, data.time]);
 			bufferOriY[0].push([data.y, data.time]);
 			bufferOriZ[0].push([data.z, data.time]);
+			rocketViewer.setRotation(data.x, data.y, data.z)
 		})
 
 		const bufferYZPos = [[], []];
@@ -257,7 +259,7 @@
 		})
 
 		const rocketViewer = new A_RocketViewer("c-rocket-view", {
-			width: getPageWidth()-(2*canvasDims[0]),
+			width: getPageWidth()-(2*canvasDims[0])-20,
 			height: getPageHeight()-canvasDims[1],
 			stl: "stl/rocket.stl"
 		})
