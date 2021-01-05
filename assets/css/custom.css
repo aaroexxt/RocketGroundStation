@@ -8,6 +8,14 @@ body {
 	padding-top: 5px;
 }
 
+#m-left {
+	padding-left: 5px;
+}
+
+#m-right {
+	padding-right: 5px;
+}
+
 .brand-large {
 	font-size: 2rem;
 }
@@ -24,4 +32,10 @@ body {
 #m-right {
 	right: 0px;
 	position: absolute;
+}
+
+.vCenter {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }

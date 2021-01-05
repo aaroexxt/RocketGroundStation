@@ -121,8 +121,8 @@ io.on('connection', client => {
 	data-raw-accel => accel data
 	data-raw-alt => alt data
 	data-ori => orientation fused frame data
-	data-yz-pos => YZ position (yPos, zPos, time)
-	data-yz-vel => YZ velocity (yVel, zVel, time)
+	data-pos => XYZ position (xPos, yPos, zPos, time) with xPos being vertical position (altitude)
+	data-vel => XYZ velocity (xVel, yVel, zVel, time) with xVel being vertical velocity
 
 	v-connect => vehicle has connected, start VOT timer
 	v-disconnect => vehicle has disconnected, stop VOT timer

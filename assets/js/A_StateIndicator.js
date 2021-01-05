@@ -13,13 +13,12 @@ var A_StateIndicator = function(canvasID, opts) {
 		height: 150, //px
 		heightBanner: 55,
 		bannerDistFromEdge: 10,
-		dataColHeight: 30,
 
 		/* DRAW OPTIONS (stroke width, default color, etc) */
 		strokeWidth: 1, //px
 		stateFontSize: 25, //px (15 big)
-		dataFontSize: 14,
-		barFontSize: 14,
+		dataFontSize: 16,
+		barFontSize: 16,
 		bgColor: "#000", //html color
 		strokeColor: "#ddd", //html color
 
@@ -69,7 +68,7 @@ var A_StateIndicator = function(canvasID, opts) {
 	]
 
 	let barWidth = this.options.width/2.2;
-	let barHeight = (this.options.height-this.options.heightBanner)/(this.data.length/2)-2;
+	let barHeight = (this.options.height-this.options.heightBanner)/(this.data.length/2)-(0.008*getPageHeight());
 
 	this.battVBar = new A_Bar(this.canvasID, {
 		width: barWidth,
@@ -359,4 +358,14 @@ A_StateIndicator.prototype.construct = function() {
 
 	this.drawStateBanner(this.getDataValue("vehicleState"));
 	let x = 0;
+}
+
+function getPageHeight() {
+  return Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight,
+    document.body.offsetHeight,
+    document.documentElement.offsetHeight,
+    document.documentElement.clientHeight
+  );
 }

@@ -15,7 +15,7 @@ var A_TVCIndicator = function(canvasID, opts) {
 		strokeWidth: 1, //px
 		titleFontSize: 35, //px (15 big)
 		dataFontSize: 15,
-		bgColor: "#000", //html color
+		bgColor: "#002", //html color
 		strokeColor: "#ddd", //html color
 		titleColor: "#fff",
 
@@ -39,8 +39,10 @@ var A_TVCIndicator = function(canvasID, opts) {
 		["active", "", "", false],
 		["yDeg", "Y+", "°", -1],
 		["zDeg", "Z+", "°", -1],
+		["rollPercent", "RWheel", "%", -1],
+		["rollSetpoint", "RSetP", "°/sec", -1],
 		["twr", "TWR", "", -1],
-		["rollPercent", "RWheel", "%", -1]
+		["mass", "Est Mass", "kg", -1]
 	]
 
 	this.construct();

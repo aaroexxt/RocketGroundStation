@@ -14,12 +14,17 @@ var A_ButtonMenu = function(canvasID, socket, opts) {
 
 		/* BUTTON OPTIONS */
 		buttonDistance: 5, //px
-		buttonEdgeDistance: 5, //px
+		buttonTBEdgeDistance: 5, //px
+		buttonRLEdgeDistance: 5, //px
+		roundButtons: true,
+
 		/* DRAW OPTIONS (stroke width, default color, etc) */
 		strokeWidth: 1, //px
-		titleFontSize: 30, //px (15 big)
-		buttonFontSize: 18,
-		bgColor: "#000", //html color
+		titleFontSize: 40, //px (15 big)
+		underlineTitle: false,
+
+		buttonFontSize: 25,
+		bgColor: "#002", //html color
 		strokeColor: "#ddd", //html color
 		titleColor: "#ddd",
 		
@@ -96,7 +101,6 @@ var A_ButtonMenu = function(canvasID, socket, opts) {
 					if (b[2] == evtId) { //id matches
 						let originalColor = JSON.parse(JSON.stringify(b[1]));
 						b[1] = pSBC(-0.4, originalColor);
-						console.log(b[1])
 						this.construct();
 
 						setTimeout(() => {
@@ -155,27 +159,34 @@ A_ButtonMenu.prototype.drawTitle = function() {
 	let width = this.ctx.measureText(this.options.title).width;
 	this.ctx.fillText(this.options.title, (this.options.width/2)-(width/2), this.options.titleFontSize);
 
-	this.ctx.beginPath();
-	this.ctx.moveTo((this.options.width/2)-(width/2), this.options.titleFontSize+2);
-	this.ctx.lineTo((this.options.width/2)+(width/2), this.options.titleFontSize+2);
-	this.ctx.stroke();
+	if (this.options.underlineTitle) {
+		this.ctx.beginPath();
+		this.ctx.moveTo((this.options.width/2)-(width/2), this.options.titleFontSize+2);
+		this.ctx.lineTo((this.options.width/2)+(width/2), this.options.titleFontSize+2);
+		this.ctx.stroke();
+	}
 }
 
 A_ButtonMenu.prototype.drawButtons = function() {
-	let buttonHeight = (this.options.height-(2*(this.options.strokeWidth+this.options.buttonEdgeDistance))-this.options.buttonEdgeDistance-(this.options.buttonDistance*this.options.buttons.length)-this.options.titleFontSize)/this.options.buttons.length;
-	let y = this.options.strokeWidth+this.options.buttonEdgeDistance+this.options.titleFontSize+this.options.buttonEdgeDistance;
+	let buttonHeight = (this.options.height-(2*(this.options.strokeWidth+this.options.buttonTBEdgeDistance))-this.options.buttonTBEdgeDistance-(this.options.buttonDistance*this.options.buttons.length)-this.options.titleFontSize)/this.options.buttons.length;
+	let y = this.options.strokeWidth+this.options.buttonTBEdgeDistance*2+this.options.titleFontSize;
 	
 	this.ctx.font = "bold "+this.options.buttonFontSize+"px Helvetica";
 	let boundingBoxes = [];
 	for (let i=0; i<this.options.buttons.length; i++) {
 		let bRow = this.options.buttons[i];
 
-		let x = this.options.buttonEdgeDistance+this.options.strokeWidth;
-		let bWidth = (this.options.width-(2*(this.options.buttonEdgeDistance+this.options.strokeWidth))-(bRow.length*this.options.buttonDistance))/bRow.length;
+		let x = this.options.buttonRLEdgeDistance+this.options.strokeWidth;
+		let bWidth = (this.options.width-(2*(this.options.buttonRLEdgeDistance+this.options.strokeWidth))-(bRow.length*this.options.buttonDistance))/bRow.length;
 		for (let j=0; j<bRow.length; j++) {
 			let b = bRow[j];
 			this.ctx.fillStyle = b[1];
-			this.drawOuterBox(x, y, bWidth, buttonHeight, 5, true);
+			if (this.options.roundButtons) {
+				this.drawOuterBox(x, y, bWidth, buttonHeight, 5, true);
+			} else {
+				this.ctx.fillRect(x, y, bWidth, buttonHeight);
+				this.drawOuterBox(x, y, bWidth, buttonHeight, 0);
+			}
 
 			let rgb = hexToRgb(b[1]);
 			let brightness = Math.round(((rgb.r * 299) + (rgb.g * 587) + (rgb.b * 114)) / 1000);

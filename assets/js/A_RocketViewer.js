@@ -63,7 +63,7 @@ A_RocketViewer.prototype.threeInit = function() {
 	plane.receiveShadow = true;
 
 
-	var material = new THREE.MeshLambertMaterial({
+	var material = new THREE.MeshPhongMaterial({
         overdraw:true,
         color: 0xfdd017,
         flatShading: true

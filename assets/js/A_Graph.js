@@ -14,8 +14,8 @@ var A_Graph = function(canvasID, opts) {
 	this.ctx = this.canvas.getContext('2d');
 	this.options = { //setup default opts object
 		/* GRAPH OFFSETS (where it starts drawing from the edges of the canvas) */
-		XAxisLeftOffset: 45, //px (65 big)
-		XAxisRightOffset: 10, //px (25 big)
+		XAxisLeftOffset: 50, //px (65 big)
+		XAxisRightOffset: 15, //px (25 big)
 		YAxisBottomOffset: 33, //px (45 big)
 		YAxisTopOffset: 20, //px (40 big)
 
