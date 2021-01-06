@@ -71,6 +71,11 @@ A_Title.prototype.stopMissionTimer = function() {
 	this.missionRunning = false;
 }
 
+A_Title.prototype.setMET = function(met) { //met is in ms
+	this.missionStartTime = met;
+	this.missionRunning = true;
+}
+
 A_Title.prototype.startConnectTimer = function() {
 	this.vehicleConnectTime = new Date().getTime();
 	this.vehicleConnected = true;
@@ -79,6 +84,10 @@ A_Title.prototype.stopConnectTimer = function() {
 	this.vehicleConnected = false;
 }
 
+A_Title.prototype.setVOT = function(vot) {
+	this.vehicleConnectTime = vot;
+	this.vehicleConnected = true;
+}
 
 A_Title.prototype.drawOuterBox = function(x, y, width, height, radius) {
 	this.ctx.strokeStyle = this.options.strokeColor;
@@ -208,7 +217,7 @@ A_Title.prototype.construct = function() {
 
 	this.init();
 	this.clear();
-	this.drawOuterBox(this.options.strokeWidth, this.options.strokeWidth, this.options.width-(2*this.options.strokeWidth), this.options.height-(2*this.options.strokeWidth), 10);
+	// this.drawOuterBox(this.options.strokeWidth, this.options.strokeWidth, this.options.width-(2*this.options.strokeWidth), this.options.height-(2*this.options.strokeWidth), 10);
 	this.drawTitle();
 	this.drawTimes();
 }

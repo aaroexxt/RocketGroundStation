@@ -16,6 +16,7 @@ var A_Bar = function(canvasID, opts) {
 		horizontal: true,
 		drawOuterBox: true,
 		initialPaint: true,
+		reverseColors: false,
 
 		/* MIN/MAX */
 		min: 0,
@@ -52,6 +53,12 @@ var A_Bar = function(canvasID, opts) {
 
 	this.startColorRGB = hexToRgb(this.options.startColor);
 	this.endColorRGB = hexToRgb(this.options.endColor);
+
+	if (this.options.reverseColors) {
+		let sC = JSON.parse(JSON.stringify(this.startColorRGB));
+		this.startColorRGB = JSON.parse(JSON.stringify(this.endColorRGB));
+		this.endColorRGB = sC;
+	}
 
 	if (this.options.initialPaint) this.update((this.options.min+this.options.max)/2)
 }

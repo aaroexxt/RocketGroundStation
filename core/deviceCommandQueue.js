@@ -186,6 +186,7 @@ class DeviceQueue {
 		this.prune(lookingFor);
 
 		let i = 0;
+		let found = false;
 		while (i < this.queue.length) {
 			let elem = this.queue[i];
 			if (elem.checkCompletion(lookingFor)) { //If it matches
@@ -193,10 +194,13 @@ class DeviceQueue {
 				debugLog("Removing element at idx="+i+" because it is completed", this);
 				elem.complete(lookingFor); //call complete on it w/full lookingFor string as pass through
 				this.queue.splice(i, 1); //remove the element
+				found = true;
 			} else { //If we didn't find it, increment the index
 				i++;
 			}
 		}
+
+		return found;
 	}
 
 	prune() {

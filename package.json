@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/aaroexxt/RocketGroundStation#readme",
   "devDependencies": {
-    "electron": "^11.1.1"
+    "electron": "^11.1.1",
+    "serialport": "^9.0.4"
   }
 }

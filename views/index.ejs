@@ -39,7 +39,8 @@
 		</div>
 
 		<nav class="nav fixed-bottom navbar-light bg-light justify-content-center">
-			<li class="navbar-brand text-danger" id="connect-status">Connection Status: Disconnected</li>
+			<li class="navbar-brand">
+				<span id="connect-server-status" class="text-danger">Server Conn: NC</span> | <span id="connect-transmit-status" class="text-danger">Transmitter Conn: NC</span> | <span id="connect-vehicle-status" class="text-danger">Vehicle Conn: NC</span></li>
 		</nav>
 
 		<!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
@@ -66,18 +67,31 @@
 			withCredentials: true
 		});
 
+		let connectedTransmitter = connectedServer = connectedVehicle = false;
 		socket.on('connect', () => {
 			console.log("Connected to server");
-			let stat = document.getElementById("connect-status");
-			stat.innerHTML = "Connection Status: OK";
-			stat.className = "navbar-brand";
+			connectedServer = true;
+			updateConnectionIndicator();
 		});
 		socket.on('disconnect', () => {
 			console.log("Disconnected from server");
-			let stat = document.getElementById("connect-status");
-			stat.innerHTML = "Connection Status: Disconnected";
-			stat.className = "navbar-brand text-danger";
+			connectedServer = false;
+			updateConnectionIndicator();
 		});
+
+		const updateConnectionIndicator = () => {
+			let statServer = document.getElementById("connect-server-status");
+			statServer.innerHTML = "Server Conn: "+(connectedServer?"OK":"NC");
+			statServer.className = (connectedServer?"":"text-danger");
+
+			let statTransmit = document.getElementById("connect-transmit-status");
+			statTransmit.innerHTML = "Transmitter Conn: "+(connectedTransmitter?"OK":"NC");
+			statTransmit.className = (connectedTransmitter?"":"text-danger");
+
+			let statVehicle = document.getElementById("connect-vehicle-status");
+			statVehicle.innerHTML = "Vehicle Conn: "+(connectedVehicle?"OK":"NC");
+			statVehicle.className = (connectedVehicle?"":"text-danger");
+		}
 
 		//Utility functions for resize
 		function getPageWidth() {
@@ -136,12 +150,12 @@
 			titleX: "sec",
 			titleY: "m AGL"
 		});
-		socket.on("data-raw-gyro", data => {
+		socket.on("data-gyro", data => {
 			bufferGyro[0].push([data.x, data.time]);
 			bufferGyro[1].push([data.y, data.time]);
 			bufferGyro[2].push([data.z, data.time]);
 		})
-		socket.on("data-raw-accel", data => {
+		socket.on("data-accel", data => {
 			bufferAccel[0].push([data.x, data.time]);
 			bufferAccel[1].push([data.y, data.time]);
 			bufferAccel[2].push([data.z, data.time]);
@@ -194,9 +208,9 @@
 			titleY: "m"
 		});
 		socket.on("data-pos", data => {
-			bufferYZPos[0].push([data.yPos, data.time]);
-			bufferYZPos[1].push([data.zPos, data.time]);
-			bufferAlt[0].push([data.xPos, data.time]);
+			bufferYZPos[0].push([data.y, data.time]);
+			bufferYZPos[1].push([data.z, data.time]);
+			bufferAlt[0].push([data.x, data.time]);
 		})
 
 		const bufferVertVel = [[]];
@@ -221,9 +235,9 @@
 			titleY: "m/sec"
 		});
 		socket.on("data-vel", data => {
-			bufferYZVel[0].push([data.yVel, data.time]);
-			bufferYZVel[1].push([data.zVel, data.time]);
-			bufferVertVel[0].push([data.xVel, data.time]);
+			bufferYZVel[0].push([data.y, data.time]);
+			bufferYZVel[1].push([data.z, data.time]);
+			bufferVertVel[0].push([data.x, data.time]);
 		})
 
 
@@ -232,10 +246,29 @@
 			height: topGraphDims[1]
 		});
 		socket.on("v-connect", data => {
+			if (connectedVehicle) return; //no double running that would reset timer
 			titleTiming.startConnectTimer();
+			connectedVehicle = true;
+			updateConnectionIndicator();
 		})
 		socket.on("v-disconnect", data => {
 			titleTiming.stopConnectTimer();
+			connectedVehicle = false;
+			updateConnectionIndicator();
+		})
+		socket.on("t-connect", data => {
+			connectedTransmitter = true;
+			updateConnectionIndicator();
+		})
+		socket.on("t-disconnect", data => {
+			connectedTransmitter = false;
+			updateConnectionIndicator();
+		})
+		socket.on("vot-set", data => {
+			titleTiming.setVOT(data.vot);
+		})
+		socket.on("met-set", data => {
+			titleTiming.setMET(data.met);
 		})
 		socket.on("m-start", data => {
 			titleTiming.startMissionTimer();
@@ -271,7 +304,9 @@
 				zDeg: data.z,
 				active: data.active,
 				rollPercent: data.rollPercent,
-				rollSetpoint: data.rollSetpoint
+				rollSetpoint: data.rollSetpoint,
+				twr: data.twr,
+				mass: data.mass
 			})
 		})
 		socket.on("v-mass", data => {

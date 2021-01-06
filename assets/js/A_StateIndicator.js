@@ -19,13 +19,13 @@ var A_StateIndicator = function(canvasID, opts) {
 		stateFontSize: 25, //px (15 big)
 		dataFontSize: 16,
 		barFontSize: 16,
-		bgColor: "#000", //html color
+		bgColor: "#002", //html color
 		strokeColor: "#ddd", //html color
 
 		/* OTHER OPTIONS */
 		states: [
-			["Startup", "#fff"],
-			["PostStartup", "#0c0"]
+			[1, "Startup", "#0ed"],
+			[2, "PostStartup", "#0c0"]
 		]
 	},
 	this.defaultState = ["Disconnected", "#e00"];
@@ -58,13 +58,13 @@ var A_StateIndicator = function(canvasID, opts) {
 
 		["horizAcc", "UNCHoriz", "m", -1],
 		["vertAcc", "UNCVert", "m", -1],
+		["velAcc", "UNCVel", "m", -1],
 
-		["pCont1", "PyroCh1", "", false],
-		["pCont2", "PyroCh2", "", false],
-		["pCont3", "PyroCh3", "", false],
-		["pCont4", "PyroCh4", "", false],
-		["pCont5", "PyroCh5", "", false],
-		["pCont6", "PyroCh6", "", false],
+		["pyro1", "PyroCh1", "", 0],
+		["pyro2", "PyroCh2", "", 0],
+		["pyro3", "PyroCh3", "", 0],
+		["pyro4", "PyroCh4", "", 0],
+		["pyro5", "PyroCh5", "", 0],
 	]
 
 	let barWidth = this.options.width/2.2;
@@ -111,7 +111,7 @@ var A_StateIndicator = function(canvasID, opts) {
 		title: this.getBarTitle("signal"),
 		fontSize: this.options.barFontSize,
 		min: -90,
-		max: -20,
+		max: -50,
 		units: this.getBarUnits("signal")
 	});
 	this.pdopBar = new A_Bar(this.canvasID, {
@@ -121,8 +121,9 @@ var A_StateIndicator = function(canvasID, opts) {
 		y: this.getDataY("pDOP"),
 		title: this.getBarTitle("pDOP"),
 		fontSize: this.options.barFontSize,
-		min: 6,
-		max: 1.25,
+		min: 1.25,
+		max: 6,
+		reverseColors: true,
 		units: this.getBarUnits("pDOP")
 	});
 
@@ -252,12 +253,28 @@ A_StateIndicator.prototype.drawStateBanner = function(state) {
 	if (state == -1 || state == "") {
 		stateText = this.defaultState[0];
 		stateColor = this.defaultState[1];
+	} else {
+		let found = false;
+		for (let i=0; i<this.options.states.length; i++) {
+			found = true;
+			let stateO = this.options.states[i];
+			if (stateO[0] == state) {
+				stateText = stateO[1];
+				stateColor = stateO[2];
+			}
+		}
+		if (!found) {
+			stateText = this.defaultState[0];
+			stateColor = this.defaultState[1];
+		}
 	}
 
 	this.ctx.fillStyle = stateColor;
 	this.drawOuterBox(this.options.bannerDistFromEdge, this.options.bannerDistFromEdge, this.options.width-2*this.options.bannerDistFromEdge, this.options.heightBanner-2*this.options.bannerDistFromEdge, 5, true);
 
-	this.ctx.fillStyle = this.options.strokeColor;
+	let rgb = hexToRgb(stateColor);
+	let brightness = Math.round(((rgb.r * 299) + (rgb.g * 587) + (rgb.b * 114)) / 1000);
+	this.ctx.fillStyle = (brightness > 125) ? "#000" : "#fff";
 	this.ctx.font = this.options.stateFontSize+"px Helvetica";
 	let width = this.ctx.measureText(stateText).width;
 	this.ctx.fillText(stateText, (this.options.width-width)/2, this.options.bannerDistFromEdge+(this.options.heightBanner/2));
@@ -267,11 +284,11 @@ A_StateIndicator.prototype.updateData = function(dIn) {
 	// (battV, rollV, servoV, vehicleState, pyroState, temp, signal, tlmRate, fixType, pDOP, horizAcc, vertAcc, gpsSats)
 	//Run thru data in and copy to this.data where applicable
 	if (!dIn) return;
-	let keys = Object.keys(this.data);
-	for (let i=0; i<keys.length; i++) {
-		if (dIn.hasOwnProperty(keys[i])) { //does it exist?
-			if (typeof dIn[keys[i]] != "undefined") { //does it exist pt 2?
-				this.data[keys[i]] = dIn[keys[i]]; //override it!
+	for (let i=0; i<this.data.length; i++) {
+		let key = this.data[i][0];
+		if (dIn.hasOwnProperty(key)) { //does it exist?
+			if (typeof dIn[key] != "undefined") { //does it exist pt 2?
+				this.data[i][3] = dIn[key]; //override it!
 			}
 		}
 	}
@@ -316,6 +333,7 @@ A_StateIndicator.prototype.updateData = function(dIn) {
 			case "temp":
 			case "tlmRate":
 			case "vehicleState":
+			case "velAcc":
 				this.ctx.fillText(d[1]+": "+d[3]+d[2], tX, tY);
 				break;
 			case "pyroState":
@@ -323,14 +341,13 @@ A_StateIndicator.prototype.updateData = function(dIn) {
 				this.ctx.fillText(d[1]+": "+(d[3]?"Armed":"Disarmed"), tX, tY);
 				this.ctx.fillStyle = this.options.strokeColor;
 				break;
-			case "pCont1":
-			case "pCont2":
-			case "pCont3":
-			case "pCont4":
-			case "pCont5":
-			case "pCont6":
-				this.ctx.fillStyle = d[3]?"#0f0":"#aa0";
-				this.ctx.fillText(d[1]+": "+(d[3]?"Cont":"NC"), tX, tY);
+			case "pyro1":
+			case "pyro2":
+			case "pyro3":
+			case "pyro4":
+			case "pyro5":
+				this.ctx.fillStyle = (d[3]==0)?"#aa0":(d[3]==1)?"#0f0":"#f00";
+				this.ctx.fillText(d[1]+": "+((d[3]==0)?"NC":(d[3]==1)?"Cont":"FIRE"), tX, tY);
 				this.ctx.fillStyle = this.options.strokeColor;
 				break;
 			default:
@@ -368,4 +385,21 @@ function getPageHeight() {
     document.documentElement.offsetHeight,
     document.documentElement.clientHeight
   );
+}
+
+function hexToRgb(hex) {
+	if (hex.length == 3 || hex.length == 4) {
+		let fHex = "#";
+		for (i=(hex[0] == "#")?1:0; i<hex.length; i++) {
+			fHex+=hex[i];
+			fHex+=hex[i];
+		}
+		hex = fHex;
+	}
+	var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	return result ? { //NUTTY expression here
+		r: parseInt(result[1], 16),
+		g: parseInt(result[2], 16),
+		b: parseInt(result[3], 16)
+	} : null;
 }
