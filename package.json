@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "rebuild": "electron-rebuild -v $(electron -v)",
+    "install": "electron-rebuild"
   },
   "repository": {
     "type": "git",
@@ -23,8 +25,10 @@
     "url": "https://github.com/aaroexxt/RocketGroundStation/issues"
   },
   "homepage": "https://github.com/aaroexxt/RocketGroundStation#readme",
-  "devDependencies": {
-    "electron": "^11.1.1",
-    "serialport": "^9.0.4"
+  "devDependencies": {},
+  "dependencies": {
+    "electron": "^5.0.5",
+    "electron-rebuild": "^1.8.5",
+    "serialport": "^7.1.5"
   }
 }

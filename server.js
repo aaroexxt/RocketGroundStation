@@ -42,7 +42,7 @@ Main.js - Contains main server file
  /* Dependency initialization */
 
  //Basic Dependencies
-// const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow } = require('electron')
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -486,29 +486,29 @@ const server = http.listen(port, () => {
   console.log('RocketGroundStation is running on port', server.address().port);
 });
 
-// function createWindow () {
-// 	const win = new BrowserWindow({
-// 		width: 1920,
-// 		height: 1080,
-// 		// autoHideMenuBar: true,
-// 		// useContentSize: true,
-// 		resizable:true
-// 	})
+function createWindow () {
+	const win = new BrowserWindow({
+		width: 1920,
+		height: 1080,
+		// autoHideMenuBar: true,
+		// useContentSize: true,
+		resizable:true
+	})
 
-// 	// win.loadFile(path.join(__dirname,"index.html"))
-// 	win.loadURL('http://localhost:80/');
-// }
+	// win.loadFile(path.join(__dirname,"index.html"))
+	win.loadURL('http://localhost:80/');
+}
 
-// // app.whenReady().then(createWindow)
+app.whenReady().then(createWindow)
 
-// app.on('window-all-closed', () => {
-//   if (process.platform !== 'darwin') {
-//     app.quit()
-//   }
-// })
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
 
-// app.on('activate', () => {
-//   if (BrowserWindow.getAllWindows().length === 0) {
-//     createWindow()
-//   }
-// })
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
+  }
+})
