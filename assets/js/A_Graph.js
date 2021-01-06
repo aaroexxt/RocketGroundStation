@@ -32,7 +32,7 @@ var A_Graph = function(canvasID, opts) {
 
 		/* DRAW OPTIONS (stroke width, default color, etc) */
 		strokeWidth: 1, //px
-		strokeWidthGraph: 0.5, //px
+		strokeWidthGraph: 1.5, //px
 		titleFontSize: 11, //px (15 big)
 		axesFontSize: 9, //px (12 big)
 		numsFontSize: 8, //px (10 big)
@@ -274,23 +274,25 @@ A_Graph.prototype.drawGraph = function(buffersToDraw, colors) {
 	}
 
 	//Find the max and min of the data in order to do autoscaling
-	let bUnitMin = 0;
-	let bUnitMax = 0;
+	let bUnitMin = Infinity;
+	let bUnitMax = -Infinity;
 	for (let b=0; b<buffersToDraw.length; b++) {
 		let buffer = buffersToDraw[b];
 		for (let i=0; i<buffer.length; i++) {
-			if (buffer[i][0] > bUnitMax) {
-				bUnitMax = buffer[i][0];
+			let bVal = Number(buffer[i][0]);
+			if (bVal > bUnitMax) {
+				bUnitMax = bVal;
 			}
-			if (buffer[i][0] < bUnitMin) {
-				bUnitMin = buffer[i][0];
+			if (bVal < bUnitMin) {
+				bUnitMin = bVal;
 			}
 		}
 	}
 
 	//Calculate the new scaled values
-	let scaledBMin = Math.min(-1.5, bUnitMin*2.25); //One tick beyond bMin or 1.5 min
-	let scaledBMax = Math.max(1.5, bUnitMax*2.25); //One tick beyond bMax
+	let scaledBMin = bUnitMin-1.5;//Math.min(bUnitMin-1.5, bUnitMin*2.25); //One tick beyond bMin or 1.5 min
+	let scaledBMax = bUnitMax+1.5; //Math.max(bUnitMax+1.5, bUnitMax*2.25); //One tick beyond bMax
+	if (this.titles.main == "Altitude") console.log(scaledBMax, bUnitMax)
 
 
 	//Redraw scaled Y axis, active scaling

@@ -161,7 +161,7 @@ const handleDefaultCommand = command => { //when no other currently active comma
 					accBuffer[1] = value;
 					accCount++;
 					break;
-				case "accY":
+				case "accZ":
 					accBuffer[2] = value;
 					accCount++;
 					break;
@@ -174,7 +174,7 @@ const handleDefaultCommand = command => { //when no other currently active comma
 					oriBuffer[1] = value;
 					oriCount++;
 					break;
-				case "oriY":
+				case "oriZ":
 					oriBuffer[2] = value;
 					oriCount++;
 					break;
@@ -187,7 +187,7 @@ const handleDefaultCommand = command => { //when no other currently active comma
 					posBuffer[1] = value;
 					posCount++;
 					break;
-				case "posY":
+				case "posZ":
 					posBuffer[2] = value;
 					posCount++;
 					break;
@@ -200,7 +200,7 @@ const handleDefaultCommand = command => { //when no other currently active comma
 					velBuffer[1] = value;
 					velCount++;
 					break;
-				case "velY":
+				case "velZ":
 					velBuffer[2] = value;
 					velCount++;
 					break;
@@ -271,7 +271,7 @@ const handleDefaultCommand = command => { //when no other currently active comma
 					break;
 				case "rollMotorV":
 					io.emit("v-state", {
-							rollV: value
+						rollV: value
 					});
 					break;
 				case "pyro1Cont":
@@ -339,7 +339,7 @@ const handleDefaultCommand = command => { //when no other currently active comma
 		}
 
 		if (accCount == 3) {
-			io.emit("data-acc", {
+			io.emit("data-accel", {
 				x: accBuffer[0],
 				y: accBuffer[1],
 				z: accBuffer[2],
@@ -407,6 +407,8 @@ io.on('connection', client => {
 	if (vehicleConnected) {
 		io.emit("v-connect");
 		io.emit("vot-set", {vot: vehicleConnectTime});
+	} else {
+		io.emit("v-disconnect");
 	}
 
 	client.on('message', data => {

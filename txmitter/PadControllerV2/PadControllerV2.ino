@@ -27,10 +27,9 @@ RH_RF95 radio(RADIO_CS, RADIO_IRQ);
 
 struct RadioPacket {
 	uint8_t id;
-	uint8_t subID;
-	float data1;
-	float data2;
-	float data3;
+	int data1;
+	int data2;
+	int data3;
 };
 
 const byte radioQueueLength = 25;
@@ -46,40 +45,18 @@ const char commandValueChar='|';
 /*
 Radio Command List
 0: Ping/pong check (heartbeat)
-1: GetRocketState
-2: SetRocketState
-3: RocketTelem
-sub IDs:
-	0 - time since startup, MET, loop freq
-	1 - flightmode, pyrostates, chutestates
-	2 - dataloggingstates, telemsendstates, telemconnstates
-	3 - battv, servov, rollmotorv
-	4 - boardtemp, gpsfix, gpssats
-	5 - gyro x, y, z
-	6 - acc x, y, z
-	7 - mag x, y, z
-	8 - gnss lat, gnss lon, alt
-	9 - ori x, y, z
-	10 - pos x, y, z
-	11 - vel x, y, z
-	12 - pyro1 cont, pyro2 cont, pyro3 cont
-	13 - pyro4 cont, pyro5 cont, blank
-	14 - pyro1 fire, pyro2 fire, pyro3 fire
-	15 - pyro4 fire, pyro5 fire, blank	
-	16 - tvc x, tvc y, blank
-4: RequestRocketTelem
-5: Enable/Disable Pyros
-6: FirePyro
+1: SetRocketState
+2: RequestRocketTelem
+3: Enable/Disable Pyros
+4: FirePyro
 */
 
 typedef enum {
 	HEARTBEAT = 0,
-	GETSTATE = 1,
-	SETSTATE = 2,
-	GETTELEM = 3,
-	REQTELEM = 4,
-	PYROARMING = 5,
-	FIREPYRO = 6
+	SETSTATE = 1,
+	REQTELEM = 2,
+	PYROARMING = 3,
+	FIREPYRO = 4
 } RadioCommands;
 
 unsigned long lastRadioRecieveTime = 0;
@@ -220,10 +197,6 @@ void setup() {
 
 float packetRate;
 int rssi;
-bool confirmLaunch = false;
-
-bool sendLaunch = false;
-unsigned long launchStartTime = 0;
 
 bool outputPackets = false;
 
@@ -305,7 +278,7 @@ void loop() {
 	}
 
 	if (currentMillis - lastHeartbeat > heartbeatDelay) {
-		addRadioPacketToQueue(HEARTBEAT, 0, 0, 0, 0);
+		addRadioPacketToQueue(HEARTBEAT, 0, 0, 0);
 		lastHeartbeat = currentMillis;
 	}
 
@@ -318,17 +291,6 @@ void loop() {
 				processCommand(serialBuffer); //This will recurse
 				serialBuffer = "";
 			}
-		}
-	}
-
-	if (sendLaunch) {
-		delay(200);
-		RadioPacket launchPacket;
-		launchPacket.id = SETSTATE;
-		launchPacket.data1 = 3;
-		sendRadioPacket(launchPacket);
-		if (millis() - launchStartTime > 5000) {
-			sendLaunch = false;
 		}
 	}
 
@@ -428,11 +390,10 @@ void loop() {
 }
 
 
-bool addRadioPacketToQueue(uint8_t id, uint8_t subID, float data1, float data2, float data3) {
-	if (radioStackPos < radioQueueLength && id >= 0 && subID >= 0) {
+bool addRadioPacketToQueue(uint8_t id, int data1, int data2, int data3) {
+	if (radioStackPos < radioQueueLength && id >= 0) {
 		//Override packet in place w/ radio ID
 		radioPacketQueue[radioStackPos].id = id;
-		radioPacketQueue[radioStackPos].subID = subID;
 		radioPacketQueue[radioStackPos].data1 = data1;
 		radioPacketQueue[radioStackPos].data2 = data2;
 		radioPacketQueue[radioStackPos].data3 = data3;
@@ -480,6 +441,32 @@ void processCommand(String input) {
  		} else {
  			Serial.print("outputEnable|false;");
  		}
+ 	} else if (command.equals("firePyro")) {
+ 		int v = value.toInt();
+ 		if (v > 0 && v < 6) {
+ 			addRadioPacketToQueue(FIREPYRO, v, 1000, 0);
+ 			Serial.print("firePyro|");
+ 			Serial.print(v);
+ 			Serial.print(";");
+ 		} else {
+ 			Serial.print("firePyro|E;");
+ 		}
+ 	} else if (command.equals("pyroarm")) {
+ 		addRadioPacketToQueue(PYROARMING, 1, 0, 0);
+ 		Serial.print("pyroArm|true;");
+ 	} else if (command.equals("pyrodisarm")) {
+ 		addRadioPacketToQueue(PYROARMING, 0, 0, 0);
+ 		Serial.print("pyroArm|false;");
+ 	} else if (command.equals("setstate")) {
+ 		int v = value.toInt();
+ 		if (v > 0) {
+	 		addRadioPacketToQueue(SETSTATE, v, 0, 0);
+	 		Serial.print("setState|");
+ 			Serial.print(v);
+ 			Serial.print(";");
+	 	} else {
+	 		Serial.print("setState|E;");
+	 	}
  	} else {
       Serial.print(F("UNC|"));
       Serial.print(command);

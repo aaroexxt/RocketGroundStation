@@ -24,8 +24,13 @@ var A_StateIndicator = function(canvasID, opts) {
 
 		/* OTHER OPTIONS */
 		states: [
-			[1, "Startup", "#0ed"],
-			[2, "PostStartup", "#0c0"]
+			[0, "FC Booting", "#050"],
+			[1, "TLM Conn Wait", "#0ed"],
+			[2, "TLM Conn Established", "#5f9"],
+			[3, "Flight", "#ff0"],
+			[4, "Descent", "#e0a"],
+			[5, "Copying SD", "#0c0"],
+			[6, "Landed", "#50f"]
 		]
 	},
 	this.defaultState = ["Disconnected", "#e00"];
