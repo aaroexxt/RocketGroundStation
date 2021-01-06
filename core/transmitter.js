@@ -20,11 +20,11 @@ DEFAULT COMMAND HANDLER (for when queue=0)
 
 */
 const settings = {
-	commandTimeout: 4000,
+	commandTimeout: 8000,
 	baudRate: 9600,
-	portCheckTimeout: 4000,
+	portCheckTimeout: 6000,
 	sendCommandInterval: 1000,
-	checkPresentInterval: 5000,
+	checkPresentInterval: 10000,
 	commands: {
 		ok: "ex"
 	},
@@ -99,7 +99,8 @@ transmitter.find = function() {
 
         serialPort.list().then( ports => {
             ports.forEach((port) => {
-                portsList.push(port.path);
+                let path = port.path || port.comName;
+                if (path.toLowerCase().indexOf("bluetooth") == -1 && path.toLowerCase().indexOf("wireless") == -1) portsList.push(path); //mac or windows
             });
 
             var testPortN = portNum => { //test port at number n of portsList
@@ -115,7 +116,7 @@ transmitter.find = function() {
                         } else {
                             //Step 1: Set max data time recv timeout
                             let dataRecvTimeout = setTimeout(() => {
-                                if (curPort.isOpen) curPort.close();
+                                if (curPort && curPort.isOpen) curPort.close();
                                 clearInterval(startCmdSendInterval); //remove data send interval
                                 portFailed(portNum, curPortID, "DATA_RECV_TIMEOUT");
                             }, settings.portCheckTimeout);
@@ -263,8 +264,10 @@ transmitter.checkTransmitterPresent = function() {
         console.log("[TMIT] existence testing failed; disconnected (e="+e+")");
         _this.status.connected = false;
 
-        if (_this.serial.isOpen) _this.serial.close(); //close it
-	    _this.serial.removeListener('readable', _this.handleData); //remove listener
+	    try {
+            if (_this.serial && _this.serial.isOpen) _this.serial.close(); //close it
+            _this.serial.removeListener('readable', _this.handleData); //remove listener
+        } catch(e) {}
     }
 
 	if (this.status.connected) { //if we're already connected, check for it
