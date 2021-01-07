@@ -52,8 +52,8 @@ var A_ButtonMenu = function(canvasID, socket, opts) {
 			],
 			[
 				["SensCalib", "#1dc4bf", "r-calib"],
-				["VehReset", "#1dc4bf", "r-vReset"],
-				["Set LSite", "#1dc4bf", "r-setLaunch"]
+				["VehReset", "#1d74bf", "r-vReset"],
+				["Set LSite", "#1dc4bf", "r-setLaunchSite"]
 			]
 		],
 

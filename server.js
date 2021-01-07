@@ -65,7 +65,7 @@ const cors = require('cors');
 //Addtl core deps
 const RequestHandler = require("./core/requestHandler.js");
 
-var transmitterConnected = vehicleConnected = false;
+var transmitterConnected = vehicleConnected = missionStarted = false;
 var vehicleConnectTime = missionStartTime = 0;
 var serverStartTime = new Date().getTime();
 
@@ -310,9 +310,6 @@ const handleDefaultCommand = command => { //when no other currently active comma
 				case "pyro5Fire":
 					if (value == "1") pyroStates[4] = 2;
 					break;
-
-
-
 			}
 
 			if (name == "tlmRate") {
@@ -403,21 +400,62 @@ transmitter.init(handleConnectDisconnect, handleDefaultCommand);
 
 
 io.on('connection', client => {
+	//State updates
 	if (transmitterConnected) io.emit("t-connect");
 	if (vehicleConnected) {
 		io.emit("v-connect");
-		io.emit("vot-set", {vot: vehicleConnectTime});
+		io.emit("vot-set", vehicleConnectTime);
 	} else {
 		io.emit("v-disconnect");
 	}
-
-	client.on('message', data => {
-		console.log("Got data: ",data);
-	});
+	if (missionStarted) io.emit("met-set", missionStartTime);
 	// client.on('disconnect', () => {});
 
-	client.on('uiButton', data => {
-		console.log("btn fire: "+data);
+	//Client uiButton clicked
+	client.on('uiButton', event => {
+		switch (event) {	
+			case "r-launch":
+				transmitter.sendCommand("setState", 3, "setState", 3);
+				missionStarted = true;
+				missionStartTime = new Date().getTime();
+				io.emit("m-start");
+				io.emit("met-set", missionStartTime);
+				break;
+			case "r-pyroArm":
+				transmitter.sendCommand("pyroArm", "", "pyroArm", true);
+				break;
+			case "r-pyroDisarm":
+				transmitter.sendCommand("pyroDisarm", "pyroDisarm", true);
+				break;
+			case "r-fire-1":
+				transmitter.sendCommand("firePyro", 1, "firePyro", 1);
+				break;
+			case "r-fire-2":
+				transmitter.sendCommand("firePyro", 2, "firePyro", 2);
+				break;
+			case "r-fire-3":
+				transmitter.sendCommand("firePyro", 3, "firePyro", 3);
+				break;
+			case "r-fire-4":
+				transmitter.sendCommand("firePyro", 4, "firePyro", 4);
+				break;
+			case "r-fire-5":
+				transmitter.sendCommand("firePyro", 5, "firePyro", 5);
+				break;
+			case "r-vReset":
+				transmitter.sendCommand("setState", 0, "setState", 0);
+				missionStarted = false;
+				io.emit("m-stop");
+				break;
+
+			/* Unprogrammed as of now
+			case "r-abort":
+			case "r-setLaunchSite":
+			case "r-calib":
+			case "r-vCheck":
+			case "r-tvcCheck":
+			*/
+		}
 	})
 
 	/*
@@ -436,7 +474,7 @@ io.on('connection', client => {
 	DONE vot-set => set vehicle on time forcefully in ms (vot)
 	met-set => set mission elapsed time forcefully in ms (met)
 	m-start => mission started, start MET timer
-	v-stop => mission stopped, stop MET timer
+	m-stop => mission stopped, stop MET timer
 
 	DONE v-tvc => tvc update (y, z, active, rollPercent, rollSetpoint, twr, mass)
 
@@ -512,3 +550,13 @@ app.on('activate', () => {
     createWindow()
   }
 })
+
+/*
+Todos
+
+
+MET
+UiButtons
+Font resizing
+
+*/

@@ -441,7 +441,7 @@ void processCommand(String input) {
  		} else {
  			Serial.print("outputEnable|false;");
  		}
- 	} else if (command.equals("firePyro")) {
+ 	} else if (command.equals("firepyro")) {
  		int v = value.toInt();
  		if (v > 0 && v < 6) {
  			addRadioPacketToQueue(FIREPYRO, v, 1000, 0);
@@ -456,10 +456,10 @@ void processCommand(String input) {
  		Serial.print("pyroArm|true;");
  	} else if (command.equals("pyrodisarm")) {
  		addRadioPacketToQueue(PYROARMING, 0, 0, 0);
- 		Serial.print("pyroArm|false;");
+ 		Serial.print("pyroDisarm|true;");
  	} else if (command.equals("setstate")) {
  		int v = value.toInt();
- 		if (v > 0) {
+ 		if (v > -1) {
 	 		addRadioPacketToQueue(SETSTATE, v, 0, 0);
 	 		Serial.print("setState|");
  			Serial.print(v);

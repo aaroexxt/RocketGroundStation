@@ -264,17 +264,17 @@
 			connectedTransmitter = false;
 			updateConnectionIndicator();
 		})
-		socket.on("vot-set", data => {
-			titleTiming.setVOT(data.vot);
+		socket.on("vot-set", vot => {
+			titleTiming.setVOT(vot);
 		})
-		socket.on("met-set", data => {
-			titleTiming.setMET(data.met);
+		socket.on("met-set", met => {
+			titleTiming.setMET(met);
 		})
 		socket.on("m-start", data => {
 			titleTiming.startMissionTimer();
 		})
 		socket.on("m-stop", data => {
-			titleTiing.stopMissionTimer();
+			titleTiming.stopMissionTimer();
 		})
 
 		const stateIndicator = new A_StateIndicator("c-state-ind", {

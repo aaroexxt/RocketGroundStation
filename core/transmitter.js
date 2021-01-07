@@ -221,6 +221,7 @@ transmitter.getValidCommandStr = function(command, value) {
 
 transmitter.sendCommand = function(command, value, responseCommand, responseValue) {
     responseCommand = responseCommand || command.toLowerCase(); //Response represents the command ID that we expect to recieve
+    value = String(value);
     var acceptedResponse;
     if (responseValue) { //if we're looking for a specific value, make the response include that
         acceptedResponse = responseCommand+settings.valueC+responseValue+settings.splitC;
