@@ -499,6 +499,7 @@ io.on('connection', client => {
 
 	todo: load vehicle states from config file?
 	also todo: load buttons from cfg file?
+	Font resizing on mac?
 	*/
 });
 
@@ -550,13 +551,3 @@ app.on('activate', () => {
     createWindow()
   }
 })
-
-/*
-Todos
-
-
-MET
-UiButtons
-Font resizing
-
-*/
