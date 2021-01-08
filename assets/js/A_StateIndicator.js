@@ -21,6 +21,7 @@ var A_StateIndicator = function(canvasID, opts) {
 		barFontSize: 16,
 		bgColor: "#002", //html color
 		strokeColor: "#ddd", //html color
+		precision: 3,
 
 		/* OTHER OPTIONS */
 		states: [
@@ -46,13 +47,13 @@ var A_StateIndicator = function(canvasID, opts) {
 	}
 
 	this.data = [
-		["battV", "AVIBatt", "V", -1],
+		["battV", "AVIB", "V", -1],
 		["vehicleState", "Sys State", "", -1],
 
-		["rollV", "Roll", "V", -1],
+		["rollV", "RollB", "V", -1],
 		["pyroState", "Pyro State", "", false],
 
-		["servoV", "Servo", "V", -1],
+		["servoV", "ServB", "V", -1],
 		["temp", "Board T", "°F", -1],
 
 		["signal", "Sig", "dbm", -1],
@@ -304,19 +305,19 @@ A_StateIndicator.prototype.updateData = function(dIn) {
 		let d = this.data[i];
 		switch (d[0]) {
 			case "battV":
-				this.battVBar.update(d[3]);
+				this.battVBar.update(d[3].toPrecision(this.options.precision));
 				break;
 			case "rollV":
-				this.rollVBar.update(d[3]);
+				this.rollVBar.update(d[3].toPrecision(this.options.precision));
 				break;
 			case "servoV":
-				this.servoVBar.update(d[3]);
+				this.servoVBar.update(d[3].toPrecision(this.options.precision));
 				break;
 			case "signal":
 				this.sigBar.update(d[3]);
 				break;
 			case "pDOP":
-				this.pdopBar.update(d[3]);
+				this.pdopBar.update(d[3].toPrecision(this.options.precision));
 				break;
 			default:
 				break;
@@ -332,13 +333,17 @@ A_StateIndicator.prototype.updateData = function(dIn) {
 		let tY = this.getDataY(d[0])+this.options.dataFontSize+2;
 
 		switch (d[0]) {
-			case "gpsSats":
+			//Numerical with precision
 			case "horizAcc":
 			case "vertAcc":
 			case "temp":
 			case "tlmRate":
-			case "vehicleState":
 			case "velAcc":
+				this.ctx.fillText(d[1]+": "+d[3].toPrecision(this.options.precision)+d[2], tX, tY);
+				break;
+			//Numerical without precision
+			case "gpsSats":
+			case "vehicleState":
 				this.ctx.fillText(d[1]+": "+d[3]+d[2], tX, tY);
 				break;
 			case "pyroState":

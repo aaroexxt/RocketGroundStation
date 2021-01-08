@@ -39,3 +39,7 @@ body {
 	align-items: center;
 	justify-content: center;
 }
+
+.navbar-brand span,li {
+	font-weight: 700;
+}
