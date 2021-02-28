@@ -42,7 +42,8 @@ Main.js - Contains main server file
  /* Dependency initialization */
 
  //Basic Dependencies
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, nativeImage } = require('electron');
+
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -57,10 +58,6 @@ const io = require('socket.io')(http, {
   'pingTimeout': 180000,
   'pingInterval': 25000
 });
-
-//Express dependencies
-const bodyParser = require('body-parser');
-const cors = require('cors');
 
 //Addtl core deps
 const RequestHandler = require("./core/requestHandler.js");
@@ -401,7 +398,11 @@ transmitter.init(handleConnectDisconnect, handleDefaultCommand);
 
 io.on('connection', client => {
 	//State updates
-	if (transmitterConnected) io.emit("t-connect");
+	if (transmitterConnected) {
+		io.emit("t-connect");
+	} else {
+		io.emit("t-disconnect");
+	}
 	if (vehicleConnected) {
 		io.emit("v-connect");
 		io.emit("vot-set", vehicleConnectTime);
@@ -500,15 +501,13 @@ io.on('connection', client => {
 	todo: load vehicle states from config file?
 	also todo: load buttons from cfg file?
 	Font resizing on mac?
+	fix: if _this.serial is undefined in txmitter return false when uibutton fires, or have an event that disables uibuttons when txmitter is not connected
 	*/
 });
 
-expressApp.use(cors()); //enable cors
-
-expressApp.use(bodyParser.urlencoded({ extended: true })); //, limit: '50mb' })); //bodyparser for getting json data
-expressApp.use(bodyParser.json());
 expressApp.use(express.static(path.join(__dirname,"assets"))); //define a static assets directory
 expressApp.set('view engine', 'ejs'); //ejs gang
+expressApp.set('views', path.join(__dirname, 'views'))
 
 expressApp.get('/status', (req, res) => {
     return res.end(RequestHandler.SUCCESS());
@@ -526,15 +525,23 @@ const server = http.listen(port, () => {
 });
 
 function createWindow () {
+	var image = nativeImage.createFromPath(path.join(__dirname, '/assets/images/rocket.ico')); 
+	// image.setTemplateImage(true);
+	console.log(image, image.isEmpty())
+
 	const win = new BrowserWindow({
 		width: 1920,
 		height: 1080,
 		// autoHideMenuBar: true,
 		// useContentSize: true,
-		resizable:true
+		resizable:true,
+		backgroundColor: '#ffffff',
+        transparent: false,
+        icon: path.join(__dirname, '/assets/images/rocket-small.png')
 	})
 
-	// win.loadFile(path.join(__dirname,"index.html"))
+	// win.setIcon(path.join(__dirname, '/assets/images/rocket.png'));
+
 	win.loadURL('http://localhost:80/');
 }
 

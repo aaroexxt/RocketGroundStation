@@ -388,7 +388,22 @@ A_Graph.prototype.flushOldBuffers = function(buffersToFlush) {
 
 //Generic "update" function that's run every tick (flush buffers, clear graph, draw graph)
 A_Graph.prototype.update = function() {
+	let lenAvg = 0;
+	for (let i=0; i<this.drawBuffers.length; i++) {
+		lenAvg += this.drawBuffers[i].length;
+	}
+	lenAvg /= this.drawBuffers.length;
+
 	this.flushOldBuffers(this.drawBuffers);
+
+	let lenAvgNew = 0;
+	for (let i=0; i<this.drawBuffers.length; i++) {
+		lenAvgNew += this.drawBuffers[i].length;
+	}
+	lenAvgNew /= this.drawBuffers.length;
+	if (lenAvg == lenAvgNew) {
+		return;
+	}
 	this.clearGraphArea();
 	if (this.options.drawZeroLine) {
 		this.drawZeroLine();

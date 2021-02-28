@@ -76,7 +76,13 @@ transmitter.init = function(fnConnectDisconnect, fnDefaultHandler) {
 	                    console.log("[TMIT] Queue isNot empty, sending command='"+rawCommand+"'");
 	                }
 
-	                this.serial.write(rawCommand);
+                    if (this.status.connected) {
+                        try {
+                            this.serial.write(rawCommand);
+                        } catch(e) {
+                            console.warn("Write to serialPort failed because: "+e);
+                        }
+                    }
 	            }
 	        }, settings.sendCommandInterval);
 
@@ -262,7 +268,7 @@ transmitter.sendCommand = function(command, value, responseCommand, responseValu
 
 transmitter.checkTransmitterPresent = function() {
 	const fail = e => {
-        console.log("[TMIT] existence testing failed; disconnected (e="+e+")");
+        if (debugMode) console.log("[TMIT] existence testing failed; disconnected (e="+e+")");
         _this.status.connected = false;
 
 	    try {

@@ -258,10 +258,12 @@
 		})
 		socket.on("t-connect", data => {
 			connectedTransmitter = true;
+			controlPanel.enable();
 			updateConnectionIndicator();
 		})
 		socket.on("t-disconnect", data => {
 			connectedTransmitter = false;
+			controlPanel.disable();
 			updateConnectionIndicator();
 		})
 		socket.on("vot-set", vot => {

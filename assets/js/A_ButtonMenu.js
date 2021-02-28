@@ -27,6 +27,8 @@ var A_ButtonMenu = function(canvasID, socket, opts) {
 		bgColor: "#002", //html color
 		strokeColor: "#ddd", //html color
 		titleColor: "#ddd",
+
+		disabled: false, //are buttons disabled?
 		
 		buttons: [
 			[
@@ -76,7 +78,7 @@ var A_ButtonMenu = function(canvasID, socket, opts) {
 	this.construct();
 
 	this.canvas.addEventListener("click", event => {
-		if (!this.boundingBoxes) return;
+		if (!this.boundingBoxes || this.disabled) return;
 
 		let rect = this.canvas.getBoundingClientRect();
 		let posX = event.clientX-rect.left;
@@ -180,7 +182,17 @@ A_ButtonMenu.prototype.drawButtons = function() {
 		let bWidth = (this.options.width-(2*(this.options.buttonRLEdgeDistance+this.options.strokeWidth))-(bRow.length*this.options.buttonDistance))/bRow.length;
 		for (let j=0; j<bRow.length; j++) {
 			let b = bRow[j];
-			this.ctx.fillStyle = b[1];
+
+			let buttonFillColor = this.disabled ? pSBC(0.4, b[1], "#808080") : b[1]; //make more grey if disabled
+			
+			let buttonColorRGB = hexToRgb(buttonFillColor);
+			let brightness = Math.round(((buttonColorRGB.r * 299) + (buttonColorRGB.g * 587) + (buttonColorRGB.b * 114)) / 1000);
+			let textFillColor =  (brightness > 125) ? "#000" : "#fff";
+			if (this.disabled) textFillColor = pSBC(0.4, textFillColor, "#808080"); //make more grey if disabled
+
+			
+
+			this.ctx.fillStyle = buttonFillColor;
 			if (this.options.roundButtons) {
 				this.drawOuterBox(x, y, bWidth, buttonHeight, 5, true);
 			} else {
@@ -188,9 +200,8 @@ A_ButtonMenu.prototype.drawButtons = function() {
 				this.drawOuterBox(x, y, bWidth, buttonHeight, 0);
 			}
 
-			let rgb = hexToRgb(b[1]);
-			let brightness = Math.round(((rgb.r * 299) + (rgb.g * 587) + (rgb.b * 114)) / 1000);
-			this.ctx.fillStyle = (brightness > 125) ? "#000" : "#fff";
+			this.ctx.fillStyle = textFillColor;
+
 			let width = this.ctx.measureText(b[0]).width;
 			this.ctx.fillText(b[0], x+(bWidth/2)-(width/2), y+(buttonHeight/2)+(this.options.buttonFontSize/2));
 
@@ -198,7 +209,7 @@ A_ButtonMenu.prototype.drawButtons = function() {
 			x+=bWidth+this.options.buttonDistance;
 		}
 
-		y+= buttonHeight+this.options.buttonDistance;
+		y += buttonHeight+this.options.buttonDistance;
 	}
 
 	this.boundingBoxes = boundingBoxes;
@@ -222,6 +233,16 @@ A_ButtonMenu.prototype.construct = function() {
 	this.drawOuterBox(this.options.strokeWidth, this.options.strokeWidth, this.options.width-(2*this.options.strokeWidth), this.options.height-(2*this.options.strokeWidth), 10);
 	this.drawTitle();
 	this.drawButtons();
+}
+
+A_ButtonMenu.prototype.disable = function() {
+	this.disabled = true;
+	this.construct();
+}
+
+A_ButtonMenu.prototype.enable = function() {
+	this.disabled = false;
+	this.construct();
 }
 
 function hexToRgb(hex) {
