@@ -38,7 +38,7 @@
 			
 		</div>
 
-		<nav class="nav fixed-bottom navbar-light bg-light justify-content-center">
+		<nav class="nav fixed-bottom navbar-dark bg-dark justify-content-center">
 			<li class="navbar-brand">
 				<span id="connect-server-status" class="text-danger">Server Conn: NC</span> | <span id="connect-transmit-status" class="text-danger">Transmitter Conn: NC</span> | <span id="connect-vehicle-status" class="text-danger">Vehicle Conn: NC</span></li>
 		</nav>
@@ -105,19 +105,15 @@
 		}
 
 		function getPageHeight() {
-		  return Math.max(
-		    document.body.scrollHeight,
-		    document.documentElement.scrollHeight,
-		    document.body.offsetHeight,
-		    document.documentElement.offsetHeight,
-		    document.documentElement.clientHeight
-		  );
+		  return window.innerHeight;
 		}
 
 		let topGraphs = 5.5;
 		let sideGraphs = 4;
 		let topGraphDims = [(getPageWidth()-(Math.floor(topGraphs)*9))/topGraphs, (getPageHeight()-65)/sideGraphs];
 		let sideGraphDims = [topGraphDims[0]*1.2, topGraphDims[1]];
+		
+		let fontMultiplier = getPageHeight()/900;
 
 		let bufferGyro = [[], [], []]; //x, y, z
 		let bufferAccel = [[], [], []]; //x, y, z
@@ -130,7 +126,8 @@
 			height: topGraphDims[1],
 			title: "IMU Gyroscopes",
 			titleX: "sec",
-			titleY: "deg/sec"
+			titleY: "deg/sec",
+			fontSizeMultiplier: fontMultiplier
 		});
 		const rawAccelGraph = new A_Graph("c-raw-accel", {
 			buffers: bufferAccel,
@@ -139,7 +136,8 @@
 			colors: ["#ff0000", "#00ff00", "#0000ff"],
 			title: "IMU Accelerometers",
 			titleX: "sec",
-			titleY: "m/sec^2"
+			titleY: "m/sec^2",
+			fontSizeMultiplier: fontMultiplier
 		});
 		const rawAltGraph = new A_Graph("c-raw-alt", {
 			buffers: bufferAlt,
@@ -148,7 +146,8 @@
 			colors: ["#eae"],
 			title: "Altitude",
 			titleX: "sec",
-			titleY: "m AGL"
+			titleY: "m AGL",
+			fontSizeMultiplier: fontMultiplier
 		});
 		socket.on("data-gyro", data => {
 			bufferGyro[0].push([data.x, data.time]);
@@ -171,7 +170,8 @@
 			colors: ["#fff"],
 			title: "Body Orientation X",
 			titleX: "sec",
-			titleY: "deg"
+			titleY: "deg",
+			fontSizeMultiplier: fontMultiplier
 		});
 		const rawOriYGraph = new A_Graph("c-ori-y", {
 			buffers: bufferOriY,
@@ -180,7 +180,8 @@
 			colors: ["#fff"],
 			title: "Body Orientation Y",
 			titleX: "sec",
-			titleY: "deg"
+			titleY: "deg",
+			fontSizeMultiplier: fontMultiplier
 		});
 		const rawOriZGraph = new A_Graph("c-ori-z", {
 			buffers: bufferOriZ,
@@ -189,7 +190,8 @@
 			colors: ["#fff"],
 			title: "Body Orientation Z",
 			titleX: "sec",
-			titleY: "deg"
+			titleY: "deg",
+			fontSizeMultiplier: fontMultiplier
 		});
 		socket.on("data-ori", data => {
 			bufferOriX[0].push([data.x, data.time]);
@@ -205,7 +207,8 @@
 			colors: ["#f00", "#ff0"],
 			title: "YZ Position",
 			titleX: "sec",
-			titleY: "m"
+			titleY: "m",
+			fontSizeMultiplier: fontMultiplier
 		});
 		socket.on("data-pos", data => {
 			bufferYZPos[0].push([data.y, data.time]);
@@ -221,7 +224,8 @@
 			colors: ["#f0f"],
 			title: "Vertical Velocity",
 			titleX: "sec",
-			titleY: "m/sec"
+			titleY: "m/sec",
+			fontSizeMultiplier: fontMultiplier
 		});
 
 		const bufferYZVel = [[], []];
@@ -232,7 +236,8 @@
 			colors: ["#f00", "#ff0"],
 			title: "YZ Velocity",
 			titleX: "sec",
-			titleY: "m/sec"
+			titleY: "m/sec",
+			fontSizeMultiplier: fontMultiplier
 		});
 		socket.on("data-vel", data => {
 			bufferYZVel[0].push([data.y, data.time]);
@@ -243,7 +248,8 @@
 
 		const titleTiming = new A_Title("c-title", {
 			width: topGraphDims[0]*0.5,
-			height: topGraphDims[1]
+			height: topGraphDims[1],
+			fontSizeMultiplier: fontMultiplier
 		});
 		socket.on("v-connect", data => {
 			if (connectedVehicle) return; //no double running that would reset timer
@@ -281,7 +287,8 @@
 
 		const stateIndicator = new A_StateIndicator("c-state-ind", {
 			width: sideGraphDims[0],
-			height: sideGraphDims[1]*1.4
+			height: sideGraphDims[1]*1.4,
+			fontSizeMultiplier: fontMultiplier
 		});
 		socket.on("v-state", data => {
 			stateIndicator.updateData(data);
@@ -292,13 +299,15 @@
 			height: (getPageHeight()-topGraphDims[1])/1.5,
 			buttonTBEdgeDistance: 0.0077*getPageHeight(),
 			buttonRLEdgeDistance: 0.03*getPageWidth(),
-			buttonDistance: 0.01*getPageWidth()
+			buttonDistance: 0.01*getPageWidth(),
+			fontSizeMultiplier: fontMultiplier
 		})
 		document.getElementById("vContainer").style.height = (getPageHeight()-topGraphDims[1]-40)+"px";
 
 		const TVCIndicator = new A_TVCIndicator("c-tvc-ind", {
 			width: sideGraphDims[0],
-			height: sideGraphDims[1]*0.6
+			height: sideGraphDims[1]*0.6,
+			fontSizeMultiplier: fontMultiplier
 		});
 		socket.on("v-tvc", data => {
 			TVCIndicator.update({

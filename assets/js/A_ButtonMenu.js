@@ -75,6 +75,11 @@ var A_ButtonMenu = function(canvasID, socket, opts) {
 		}
 	}
 
+	let fm = Number(opts.fontSizeMultiplier); //change the font size if multiplier is specified
+	if (typeof fm != "undefined" && !isNaN(fm)) {
+		this.options.buttonFontSize*=fm;
+	}
+
 	this.construct();
 
 	this.canvas.addEventListener("click", event => {

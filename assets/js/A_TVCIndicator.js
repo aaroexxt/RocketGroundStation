@@ -21,8 +21,8 @@ var A_TVCIndicator = function(canvasID, opts) {
 
 		/* OTHER OPTIONS */
 		title: "TVC",
-		titleTopSpacing: 10,
-		titleBottomSpacing: 3
+		titleTopSpacing: 5,
+		titleBottomSpacing: 1
 	}
 
 	//Now, we loop through opts to see if we should override any of the default options
@@ -33,6 +33,12 @@ var A_TVCIndicator = function(canvasID, opts) {
 				this.options[keys[i]] = opts[keys[i]]; //override it!
 			}
 		}
+	}
+
+	let fm = Number(opts.fontSizeMultiplier); //change the font size if multiplier is specified
+	if (typeof fm != "undefined" && !isNaN(fm)) {
+		this.options.titleFontSize*=fm;
+		this.options.dataFontSize*=fm;
 	}
 
 	this.data = [
@@ -113,7 +119,7 @@ A_TVCIndicator.prototype.drawText = function() {
 
 	let y = this.options.titleTopSpacing+this.options.titleBottomSpacing+this.options.titleFontSize;
 	let height = this.options.height-y;
-	let rowDiff = height/(1+Math.floor(this.data.length/2));
+	let rowDiff = (height-5)/(1+Math.floor(this.data.length/2));
 
 	let d = this.data[0];
 	this.ctx.fillStyle = d[3]?"#0f0":"#f00";

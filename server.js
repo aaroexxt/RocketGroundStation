@@ -498,10 +498,12 @@ io.on('connection', client => {
 	r-setLaunch => set launch site from gps pos
 
 
-	todo: load vehicle states from config file?
-	also todo: load buttons from cfg file?
+	todo:
+	load vehicle states from config file
+	load buttons from cfg file
+	alert for when transmit fails etc
+
 	Font resizing on mac?
-	fix: if _this.serial is undefined in txmitter return false when uibutton fires, or have an event that disables uibuttons when txmitter is not connected
 	*/
 });
 
@@ -525,19 +527,14 @@ const server = http.listen(port, () => {
 });
 
 function createWindow () {
-	var image = nativeImage.createFromPath(path.join(__dirname, '/assets/images/rocket.ico')); 
-	// image.setTemplateImage(true);
-	console.log(image, image.isEmpty())
-
 	const win = new BrowserWindow({
 		width: 1920,
 		height: 1080,
 		// autoHideMenuBar: true,
 		// useContentSize: true,
-		resizable:true,
+		resizable: true,
 		backgroundColor: '#ffffff',
-        transparent: false,
-        icon: path.join(__dirname, '/assets/images/rocket-small.png')
+        transparent: false
 	})
 
 	// win.setIcon(path.join(__dirname, '/assets/images/rocket.png'));

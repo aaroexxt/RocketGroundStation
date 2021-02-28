@@ -48,6 +48,11 @@ var A_Bar = function(canvasID, opts) {
 		}
 	}
 
+	let fm = Number(opts.fontSizeMultiplier); //change the font size if multiplier is specified
+	if (typeof fm != "undefined" && !isNaN(fm)) {
+		this.options.fontSize*=fm;
+	}
+
 	//By default, set horizontal var by aspect ratio (but can be overridden)
 	this.options.horizontal = (this.options.width > this.options.height);
 

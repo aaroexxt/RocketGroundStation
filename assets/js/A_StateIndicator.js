@@ -46,6 +46,13 @@ var A_StateIndicator = function(canvasID, opts) {
 		}
 	}
 
+	let fm = Number(opts.fontSizeMultiplier); //change the font size if multiplier is specified
+	if (typeof fm != "undefined" && !isNaN(fm)) {
+		this.options.stateFontSize*=fm;
+		this.options.dataFontSize*=fm;
+		this.options.barFontSize*=fm;
+	}
+
 	this.data = [
 		["battV", "AVIB", "V", -1],
 		["vehicleState", "Sys State", "", -1],
@@ -388,13 +395,7 @@ A_StateIndicator.prototype.construct = function() {
 }
 
 function getPageHeight() {
-  return Math.max(
-    document.body.scrollHeight,
-    document.documentElement.scrollHeight,
-    document.body.offsetHeight,
-    document.documentElement.offsetHeight,
-    document.documentElement.clientHeight
-  );
+	return window.innerHeight;
 }
 
 function hexToRgb(hex) {

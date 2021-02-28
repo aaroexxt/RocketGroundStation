@@ -14,7 +14,7 @@ var A_Graph = function(canvasID, opts) {
 	this.ctx = this.canvas.getContext('2d');
 	this.options = { //setup default opts object
 		/* GRAPH OFFSETS (where it starts drawing from the edges of the canvas) */
-		XAxisLeftOffset: 50, //px (65 big)
+		XAxisLeftOffset: 42, //px (65 big)
 		XAxisRightOffset: 15, //px (25 big)
 		YAxisBottomOffset: 33, //px (45 big)
 		YAxisTopOffset: 20, //px (40 big)
@@ -33,9 +33,9 @@ var A_Graph = function(canvasID, opts) {
 		/* DRAW OPTIONS (stroke width, default color, etc) */
 		strokeWidth: 1, //px
 		strokeWidthGraph: 1.5, //px
-		titleFontSize: 11, //px (15 big)
-		axesFontSize: 9, //px (12 big)
-		numsFontSize: 8, //px (10 big)
+		titleFontSize: 14, //px (15 big)
+		axesFontSize: 11, //px (12 big)
+		numsFontSize: 10, //px (10 big)
 		bgColor: "#002", //html color
 		strokeColor: "#ddd", //html color
 		drawZeroLine: false
@@ -57,6 +57,13 @@ var A_Graph = function(canvasID, opts) {
 		if (!opts.hasOwnProperty(requiredProperties[i]) || typeof opts[requiredProperties[i]] == "undefined") {
 			return console.error("Missing required property in options: '"+requiredProperties[i]+"'");
 		}
+	}
+
+	let fm = Number(opts.fontSizeMultiplier); //change the font size if multiplier is specified
+	if (typeof fm != "undefined" && !isNaN(fm)) {
+		this.options.titleFontSize*=fm;
+		this.options.axesFontSize*=fm;
+		this.options.numsFontSize*=fm;
 	}
 
 	//Setup constants based on present required ones
@@ -442,11 +449,5 @@ function getPageWidth() {
 }
 
 function getPageHeight() {
-  return Math.max(
-    document.body.scrollHeight,
-    document.documentElement.scrollHeight,
-    document.body.offsetHeight,
-    document.documentElement.offsetHeight,
-    document.documentElement.clientHeight
-  );
+	return window.innerHeight;
 }

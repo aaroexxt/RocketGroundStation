@@ -34,6 +34,12 @@ var A_Title = function(canvasID, opts) {
 		}
 	}
 
+	let fm = Number(opts.fontSizeMultiplier); //change the font size if multiplier is specified
+	if (typeof fm != "undefined" && !isNaN(fm)) {
+		this.options.titleFontSize*=fm;
+		this.options.timeFontSize*=fm;
+	}
+
 	this.missionRunning = false;
 	this.vehicleConnected = false;
 	this.vehicleConnectTime = 0;
