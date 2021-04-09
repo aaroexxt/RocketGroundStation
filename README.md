@@ -9,7 +9,11 @@ This software is designed to work with [Zenith](https://github.com/aaroexxt/TVCR
 - Vehicle connectivity tracking, signal strength indication
 - Clear and prominent vehicle state indication
 - Simple control panel with remote commands to send to vehicle
-- (Todo) Waypoint plotting
+
+#### Todos
+
+- Waypoint plotting
+- More efficient packet transmission structure (bitfields for pyro information instead of whole bytes) 
 
 ### Demos
 
