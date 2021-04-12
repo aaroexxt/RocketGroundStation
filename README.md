@@ -14,6 +14,7 @@ This software is designed to work with [Zenith](https://github.com/aaroexxt/TVCR
 
 - Waypoint plotting
 - More efficient packet transmission structure (bitfields for pyro information instead of whole bytes) 
+- Better interface! There's a great example in ![Joe's latest video of Lumineer](https://www.youtube.com/watch?v=BtdsrU057Ms)
 
 ### Demos
 
