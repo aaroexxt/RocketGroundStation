@@ -312,19 +312,19 @@ A_StateIndicator.prototype.updateData = function(dIn) {
 		let d = this.data[i];
 		switch (d[0]) {
 			case "battV":
-				this.battVBar.update(d[3].toPrecision(this.options.precision));
+				this.battVBar.update(Number(d[3]).toPrecision(this.options.precision));
 				break;
 			case "rollV":
-				this.rollVBar.update(d[3].toPrecision(this.options.precision));
+				this.rollVBar.update(Number(d[3]).toPrecision(this.options.precision));
 				break;
 			case "servoV":
-				this.servoVBar.update(d[3].toPrecision(this.options.precision));
+				this.servoVBar.update(Number(d[3]).toPrecision(this.options.precision));
 				break;
 			case "signal":
 				this.sigBar.update(d[3]);
 				break;
 			case "pDOP":
-				this.pdopBar.update(d[3].toPrecision(this.options.precision));
+				this.pdopBar.update(Number(d[3]).toPrecision(this.options.precision));
 				break;
 			default:
 				break;
@@ -346,7 +346,7 @@ A_StateIndicator.prototype.updateData = function(dIn) {
 			case "temp":
 			case "tlmRate":
 			case "velAcc":
-				this.ctx.fillText(d[1]+": "+d[3].toPrecision(this.options.precision)+d[2], tX, tY);
+				this.ctx.fillText(d[1]+": "+Number(d[3]).toPrecision(this.options.precision)+d[2], tX, tY);
 				break;
 			//Numerical without precision
 			case "gpsSats":
